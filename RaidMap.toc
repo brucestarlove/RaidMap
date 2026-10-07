@@ -27,6 +27,7 @@ Render\Tokens.lua
 UI\Library.lua
 UI\Transfer.lua
 UI\PlaceDrag.lua
+UI\Draw.lua
 UI\RosterPanel.lua
 UI\Filmstrip.lua
 UI\NotesPanel.lua

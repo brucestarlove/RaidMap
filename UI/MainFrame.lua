@@ -21,6 +21,11 @@ local RAID_ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 -- this much higher.
 local CAPTION_ROW = 14
 
+-- Clear space between the toolbar and the roster, map and notes under it.
+-- Without it the map starts on the toolbar's bottom edge and the icons in the
+-- toolbar run over it.
+local TOOLBAR_GAP = 8
+
 local frame
 
 -- Clamped, because undoing a slide add can leave currentSlide past the end.
@@ -219,6 +224,17 @@ end
 
 local PALETTE_HINT = "Click to add, or drag onto the map."
 
+local DRAW_TOOLS = {
+	{
+		key = "arrow", text = "Arrow", title = "Draw arrows",
+		hint = "Drag on the map from where it starts to where it points.",
+	},
+	{
+		key = "path", text = "Path", title = "Draw paths",
+		hint = "Drag on the map and the path follows the pointer.",
+	},
+}
+
 local DISPLAY_NEXT = { both = "icon", icon = "name", name = "both" }
 local DISPLAY_LABEL = { both = "Show: Both", icon = "Show: Icon", name = "Show: Name" }
 
@@ -346,9 +362,80 @@ local function CreateWindow()
 		end)
 	end
 
+	-- Drawing tools: each arms a left-drag on the map, and stays armed until it
+	-- is clicked again.
+	frame.drawTools = {}
+	local lastTool
+	for _, tool in ipairs(DRAW_TOOLS) do
+		local button = CreateFrame("Button", nil, toolbar, "UIPanelButtonTemplate")
+		button:SetSize(60, 20)
+		if lastTool then
+			button:SetPoint("LEFT", lastTool, "RIGHT", 4, 0)
+		else
+			button:SetPoint("LEFT", 8 * 25 + 10 + 3 * 25 + 12, 0)
+		end
+		button:SetScript("OnClick", function() ns.Draw:SetTool(tool.key) end)
+		button:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_TOP")
+			GameTooltip:AddLine(tool.title)
+			GameTooltip:AddLine(tool.hint, 0.6, 0.6, 0.6)
+			GameTooltip:AddLine("Drag the end with the arrowhead to move it,", 0.6, 0.6, 0.6)
+			GameTooltip:AddLine("right-click there to delete it.", 0.6, 0.6, 0.6)
+			GameTooltip:AddLine("Click again to stop drawing.", 0.6, 0.6, 0.6)
+			GameTooltip:Show()
+		end)
+		button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		frame.drawTools[tool.key] = button
+		lastTool = button
+	end
+
+	-- What the next thing drawn will be coloured. A dark rim, because the
+	-- swatch is sometimes the colour of the window behind it.
+	local swatch = CreateFrame("Button", nil, toolbar)
+	swatch:SetSize(18, 18)
+	swatch:SetPoint("LEFT", lastTool, "RIGHT", 6, 0)
+	local rim = swatch:CreateTexture(nil, "BACKGROUND")
+	rim:SetAllPoints()
+	rim:SetColorTexture(0, 0, 0, 1)
+	swatch.fill = swatch:CreateTexture(nil, "ARTWORK")
+	swatch.fill:SetPoint("TOPLEFT", 2, -2)
+	swatch.fill:SetPoint("BOTTOMRIGHT", -2, 2)
+	swatch:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
+	swatch:SetScript("OnClick", function() ns.Draw:NextColor() end)
+	swatch:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:AddLine("Colour of new arrows and paths")
+		GameTooltip:AddLine(ns.PATH_COLORS[ns.Draw:Color()].name .. ". Click for the next one.", 0.6, 0.6, 0.6)
+		GameTooltip:Show()
+	end)
+	swatch:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	frame.drawSwatch = swatch
+
+	-- Lit and white while armed, the way the strip marks the current slide.
+	local function RefreshDrawTools()
+		for _, tool in ipairs(DRAW_TOOLS) do
+			local button = frame.drawTools[tool.key]
+			if ns.Draw.tool == tool.key then
+				button:SetText("|cffffffff" .. tool.text .. "|r")
+				button:LockHighlight()
+			else
+				button:SetText(tool.text)
+				button:UnlockHighlight()
+			end
+		end
+
+		local color = ns.PATH_COLORS[ns.Draw:Color()]
+		swatch.fill:SetColorTexture(color[1], color[2], color[3], 1)
+		-- The tooltip names the colour, and the click that changed it left
+		-- the pointer where it was.
+		if GameTooltip:IsOwned(swatch) then swatch:GetScript("OnEnter")(swatch) end
+	end
+	ns.Events:On("DRAW_CHANGED", RefreshDrawTools)
+	RefreshDrawTools()
+
 	local undo = CreateFrame("Button", nil, toolbar, "UIPanelButtonTemplate")
 	undo:SetSize(60, 20)
-	undo:SetPoint("LEFT", 8 * 25 + 10 + 3 * 25 + 12, 0)
+	undo:SetPoint("LEFT", swatch, "RIGHT", 12, 0)
 	undo:SetText("Undo")
 	undo:SetScript("OnClick", function() ns.History:Undo() end)
 
@@ -374,7 +461,7 @@ local function CreateWindow()
 	-- Roster column: header, the list, then the two toggles that say how the
 	-- names in it are drawn on the map.
 	local rosterHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	rosterHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -88 - CAPTION_ROW)
+	rosterHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -88 - CAPTION_ROW - TOOLBAR_GAP)
 	rosterHeader:SetText("Raid")
 
 	local demoToggle = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
@@ -395,7 +482,7 @@ local function CreateWindow()
 	local TOGGLE_WIDTH = (ns.RosterPanel.WIDTH - 4) / 2
 
 	local roster = ns.CreateRosterPanel(frame)
-	roster:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -106 - CAPTION_ROW)
+	roster:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -106 - CAPTION_ROW - TOOLBAR_GAP)
 	roster:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 56 + CAPTION_ROW)
 	frame.roster = roster
 
@@ -468,6 +555,7 @@ local function CreateWindow()
 	ns.MainCanvas = canvas
 
 	ns.TokenLayer = ns.CreateTokenLayer(canvas)
+	ns.Draw:Attach(canvas, ns.TokenLayer)
 
 	-- Slide strip, anchored to the canvas so it tracks the notes panel opening
 	-- and closing rather than running underneath it.
@@ -480,7 +568,7 @@ local function CreateWindow()
 
 	-- Notes
 	local notes = ns.CreateNotesPanel(frame)
-	notes:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, -88 - CAPTION_ROW)
+	notes:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, -88 - CAPTION_ROW - TOOLBAR_GAP)
 	notes:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -10, 28)
 	frame.notes = notes
 
@@ -585,6 +673,8 @@ local function CreateWindow()
 		local nx, ny = self:CursorToNormalized()
 		if nx and self:IsMouseOver() then
 			readout:SetText(("x %.3f   y %.3f   zoom %.2fx"):format(nx, ny, self.zoom))
+		elseif ns.Draw.tool then
+			readout:SetText(("zoom %.2fx   |cff888888left-drag on the map draws, click the tool again to stop|r"):format(self.zoom))
 		else
 			readout:SetText(("zoom %.2fx   |cff888888right-drag pans, wheel zooms, right-click a token to delete|r"):format(self.zoom))
 		end

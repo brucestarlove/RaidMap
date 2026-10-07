@@ -41,6 +41,65 @@ function ns.RoleLabel(role, index)
 	return ("|cff%02x%02x%02x%s%d|r"):format(role.r * 255, role.g * 255, role.b * 255, role.short, index or 1)
 end
 
+--[[
+Paths: arrows and drawn lines. The element's own position is the end the
+arrowhead is on, and its token is only the handle there -- what is dragged to
+move the path and right-clicked to delete it. The lines belong to that token,
+so they come and go with it, and are placed in canvas pixels like the tokens
+are: a path keeps its thickness and the size of its head at any zoom.
+
+A path stores its colour as an index into this list, so the shades can be
+retuned without touching anyone's boards. Only ever add to the end of it.
+]]
+ns.PATH_COLORS = {
+	{ name = "White",  1.00, 1.00, 1.00 },
+	{ name = "Yellow", 1.00, 0.82, 0.00 },
+	{ name = "Red",    1.00, 0.30, 0.30 },
+	{ name = "Green",  0.35, 0.90, 0.45 },
+	{ name = "Blue",   0.35, 0.65, 1.00 },
+	{ name = "Purple", 0.80, 0.50, 1.00 },
+}
+
+local PATH_THICKNESS = 3
+local PATH_HANDLE = 18
+local HEAD_LENGTH = 12
+local HEAD_COS, HEAD_SIN = math.cos(math.rad(28)), math.sin(math.rad(28))
+
+local function PlaceLine(line, canvas, fromX, fromY, toX, toY)
+	line:SetStartPoint("TOPLEFT", canvas, fromX, fromY)
+	line:SetEndPoint("TOPLEFT", canvas, toX, toY)
+end
+
+-- One line a segment, then two for the head. tipX, tipY is where the element
+-- itself sits; every other point is an offset from it.
+local function LayoutPath(token, canvas, tipX, tipY)
+	local element = token.element
+	local pts, units = element.data.pts or {}, ns.Model.PATH_UNITS
+	local count = math.floor(#pts / 2)
+	local fromX, fromY
+
+	for i = 1, count do
+		local x, y = canvas:NormalizedToOffset(
+			element.x + pts[2 * i - 1] / units, element.y + pts[2 * i] / units)
+		if fromX then PlaceLine(token.lines[i - 1], canvas, fromX, fromY, x, y) end
+		fromX, fromY = x, y
+	end
+	if not fromX then return end
+
+	PlaceLine(token.lines[count], canvas, fromX, fromY, tipX, tipY)
+
+	-- The head points along the last segment, swept back either side of it.
+	local dx, dy = fromX - tipX, fromY - tipY
+	local length = math.sqrt(dx * dx + dy * dy)
+	if length < 0.01 then dx, dy, length = -1, 0, 1 end
+	dx, dy = dx / length * HEAD_LENGTH, dy / length * HEAD_LENGTH
+
+	PlaceLine(token.lines[count + 1], canvas, tipX, tipY,
+		tipX + dx * HEAD_COS - dy * HEAD_SIN, tipY + dx * HEAD_SIN + dy * HEAD_COS)
+	PlaceLine(token.lines[count + 2], canvas, tipX, tipY,
+		tipX + dx * HEAD_COS + dy * HEAD_SIN, tipY - dx * HEAD_SIN + dy * HEAD_COS)
+end
+
 local LayerMixin = {}
 
 function LayerMixin:SetSlide(slide)
@@ -58,6 +117,7 @@ function LayerMixin:AcquireToken(index)
 	token:SetSize(TOKEN_SIZE, TOKEN_SIZE)
 
 	token.icon = token:CreateTexture(nil, "OVERLAY")
+	token.lines = {}
 
 	token.label = token:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	-- Outlined, because unoutlined text vanishes against busy map artwork.
@@ -112,6 +172,7 @@ function LayerMixin:AcquireToken(index)
 		local ox, oy = canvas:NormalizedToOffset(self.element.x, self.element.y)
 		self:ClearAllPoints()
 		self:SetPoint("CENTER", canvas, "TOPLEFT", ox, oy)
+		if self.element.kind == "path" then LayoutPath(self, canvas, ox, oy) end
 	end
 
 	self.pool[index] = token
@@ -191,6 +252,45 @@ local function StyleRole(token, element)
 	token:SetSize(TOKEN_SIZE, TOKEN_SIZE)
 end
 
+local function StylePath(token, element)
+	token.icon:Hide()
+	token.label:SetText("")
+	token:SetSize(PATH_HANDLE, PATH_HANDLE)
+
+	local color = ns.PATH_COLORS[element.data.color] or ns.PATH_COLORS[1]
+	local points = math.floor(#(element.data.pts or {}) / 2)
+	local count = points > 0 and points + 2 or 0
+
+	for i = 1, count do
+		local line = token.lines[i]
+		if not line then
+			line = token:CreateLine(nil, "ARTWORK")
+			line:SetThickness(PATH_THICKNESS)
+			token.lines[i] = line
+		end
+		line:SetColorTexture(color[1], color[2], color[3], 1)
+		line:Show()
+	end
+	for i = count + 1, #token.lines do
+		token.lines[i]:Hide()
+	end
+end
+
+local STYLES = { marker = StyleMarker, player = StylePlayer, role = StyleRole, path = StylePath }
+
+-- Paths lie under the tokens standing on them. Set on every styling, because
+-- a pooled token is a path one refresh and a raid marker the next.
+local function Dress(token, element, board, canvas)
+	local isPath = element.kind == "path"
+	if not isPath then
+		for _, line in ipairs(token.lines) do line:Hide() end
+	end
+	token:SetFrameLevel(canvas:GetFrameLevel() + (isPath and 1 or 2))
+	STYLES[element.kind](token, element, board)
+	token:Reposition()
+	token:Show()
+end
+
 function LayerMixin:Refresh()
 	-- A closed presentation window should not pay for every edit made in the
 	-- editor behind it; it re-syncs from scratch when it opens. Driven by an
@@ -207,21 +307,33 @@ function LayerMixin:Refresh()
 		local token = self:AcquireToken(i)
 		token.element = element
 
-		if element.kind == "marker" then
-			StyleMarker(token, element)
-		elseif element.kind == "player" then
-			StylePlayer(token, element, board)
-		elseif element.kind == "role" then
-			StyleRole(token, element)
+		if STYLES[element.kind] then
+			Dress(token, element, board, self.canvas)
+		else
+			-- A kind from a newer version than this one. Not drawn, rather
+			-- than drawn as whatever this token was last.
+			token:Hide()
 		end
-
-		token:Reposition()
-		token:Show()
 	end
 
 	for i = count + 1, #self.pool do
 		self.pool[i]:Hide()
 	end
+end
+
+-- A path that is still being drawn: on screen, but no slide's element yet.
+-- nil takes it down again.
+function LayerMixin:SetPreview(element)
+	if not element then
+		if self.pool.preview then self.pool.preview:Hide() end
+		return
+	end
+
+	local token = self:AcquireToken("preview")
+	-- Or it would sit under the pointer and take the mouse the stroke needs.
+	token:EnableMouse(false)
+	token.element = element
+	Dress(token, element, nil, self.canvas)
 end
 
 function LayerMixin:RepositionAll()

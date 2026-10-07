@@ -438,6 +438,20 @@ def test_party():
     uid = x.get("ns:CurrentPack().uid")
     check(same(uid, x, y), "anyone in a party can publish")
 
+    x.do("""
+        local slide, board = slideOf(1)
+        local px, py, pts = ns.Model:PathShape({ { 0.2, 0.3 }, { 0.4, 0.45 }, { 0.6, 0.5 } })
+        ns.Model:AddElement(slide, ns.Model:NewElement(board, "path", px, py, { pts = pts, color = 3 }))
+        ns.Comm:PublishPack()
+    """)
+    w.run()
+    got = y.get(f"""(function()
+        local elements = ns.db.profile.packs["{uid}"].boards[1].slides[1].elements
+        local path = elements[#elements]
+        return path.kind .. " " .. table.concat(path.data.pts, " ") .. " colour " .. path.data.color
+    end)()""")
+    check(same(uid, x, y) and got == "path -1600 -800 -800 -200 colour 3", f"a drawn path is published like any token ({got})")
+
     z = w.join("Zed", party=True)
     w.run(11)   # past the announce throttle
     x.do('fire("GROUP_ROSTER_UPDATE")')

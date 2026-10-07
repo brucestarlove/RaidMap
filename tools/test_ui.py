@@ -54,6 +54,13 @@ function M:RegisterEvent(e) self.events[e] = true end
 function M:UnregisterEvent(e) self.events[e] = nil end
 function M:CreateTexture() return new("Texture", nil, self) end
 function M:CreateFontString() return new("FontString", nil, self) end
+-- A line remembers where it runs and in what colour.
+function M:CreateLine() return new("Line", nil, self) end
+function M:SetStartPoint(_, _, x, y) self._from = { x, y } end
+function M:SetEndPoint(_, _, x, y) self._to = { x, y } end
+function M:SetColorTexture(r, g, b) self._color = { r, g, b } end
+function M:SetFrameLevel(level) self._level = level end
+function M:GetFrameLevel() return self._level or 1 end
 function M:GetParent() return self.parent end
 
 local function resized(self)
@@ -88,6 +95,7 @@ function M:GetFontString()
 end
 function M:GetFont() return "font", 10 end
 function M:GetStringWidth() return 40 end
+function M:GetStringHeight() return 12 end
 function M:SetChecked(c) self._checked = c and true or false end
 function M:GetChecked() return self._checked end
 function M:SetTexture(t) self._texture = t end
@@ -252,6 +260,11 @@ def check(cond, msg):
     print(("  ok    " if cond else "  FAIL  ") + msg)
     if not cond:
         failures.append(msg)
+
+
+def near(x, y, wantX, wantY):
+    """A point that went out through the cursor and came back is only nearly itself."""
+    return abs(x - wantX) < 1e-9 and abs(y - wantY) < 1e-9
 
 
 def toc_files():
@@ -508,6 +521,142 @@ def test_client(label, flavor_setup, author):
     lua.execute("tabFor(2).scripts.OnClick(tabFor(2), 'RightButton') ns.Model:RemoveSlide(ns:CurrentBoard(), 2)")
     lua.execute("popup.EditBox:SetText('gone') StaticPopupDialogs[popup.which].OnAccept(popup, popup.data)")
     check(ev(names) == f"{first}, Slide 4", "and a slide deleted while its popup was open renames nothing")
+
+    print("  -- drawing")
+    lua.execute("""
+        arrowTool, pathTool, swatch = window.drawTools.arrow, window.drawTools.path, window.drawSwatch
+        layer = ns.TokenLayer
+
+        -- Left button down at the first point, the pointer through the rest,
+        -- and up where it ends.
+        function stroke(...)
+            local points = { ... }
+            cursorTo(points[1], points[2])
+            canvas.scripts.OnMouseDown(canvas, "LeftButton")
+            for i = 3, #points, 2 do
+                cursorTo(points[i], points[i + 1])
+                canvas.scripts.OnUpdate(canvas)
+            end
+            previewed = layer.pool.preview ~= nil and layer.pool.preview:IsShown()
+            canvas.scripts.OnMouseUp(canvas, "LeftButton")
+        end
+        function tokenOf(element, of)
+            for _, token in ipairs((of or layer).pool) do
+                if token:IsShown() and token.element == element then return token end
+            end
+        end
+        function linesShown(token)
+            local n = 0
+            for _, line in ipairs(token.lines) do if line:IsShown() then n = n + 1 end end
+            return n
+        end
+        function ends(line) return ("%.0f %.0f > %.0f %.0f"):format(line._from[1], line._from[2], line._to[1], line._to[2]) end
+        function span(ax, ay, bx, by)
+            local x1, y1 = canvas:NormalizedToOffset(ax, ay)
+            local x2, y2 = canvas:NormalizedToOffset(bx, by)
+            return ("%.0f %.0f > %.0f %.0f"):format(x1, y1, x2, y2)
+        end
+        function lengthOf(line) return math.sqrt((line._to[1] - line._from[1]) ^ 2 + (line._to[2] - line._from[2]) ^ 2) end
+        function pts(element) return table.concat(element.data.pts, " ") end
+
+        ns.Model:ClearSlide(elements() and ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide])
+        stroke(0.2, 0.3, 0.6, 0.5)
+    """)
+    check(ev("#elements()") == 0, "with no tool armed, a left-drag on the map draws nothing")
+
+    lua.execute("click(arrowTool) stroke(0.2, 0.3, 0.4, 0.45, 0.6, 0.5)")
+    e = ev("last()")
+    check(ev("#elements()") == 1 and e.kind == "path" and near(e.x, e.y, 0.6, 0.5) and ev("pts(last())") == "-1600 -800",
+          f"Arrow draws one straight from the press to the release, kept as its end and the offset back to its start ({ev('pts(last())')})")
+    check(ev("previewed and not layer.pool.preview:IsShown()"), "it is on screen while it is being dragged out, and the preview goes when it lands")
+    check(ev("arrowTool:GetText()") == "|cffffffffArrow|r" and ev("ns.Draw.tool") == "arrow", "the tool is lit and stays armed for the next one")
+    lua.execute("arrow = last() token = tokenOf(arrow)")
+    check(ev("linesShown(token)") == 3 and ev("ends(token.lines[1])") == ev("span(0.2, 0.3, 0.6, 0.5)"),
+          f"it is drawn as a shaft from start to end ({ev('ends(token.lines[1])')})")
+    head = ev("""(function()
+        local tipX, tipY = canvas:NormalizedToOffset(0.6, 0.5)
+        local out = {}
+        for i = 2, 3 do
+            local line = token.lines[i]
+            out[#out + 1] = (line._from[1] == tipX and line._from[2] == tipY and line._to[1] < tipX) and ("%.0f"):format(lengthOf(line)) or "wrong"
+        end
+        return table.concat(out, " ") .. (ends(token.lines[2]) ~= ends(token.lines[3]) and " apart" or " same")
+    end)()""")
+    check(head == "12 12 apart", f"and two barbs swept back from the end, the same size at any zoom ({head})")
+    check(ev("token:GetFrameLevel() == canvas:GetFrameLevel() + 1"), "a path lies under the tokens, not over them")
+
+    lua.execute("stroke(0.3, 0.3, 0.3, 0.3)")
+    check(ev("#elements()") == 1, "a click that goes nowhere is not an arrow")
+
+    lua.execute("click(pathTool) stroke(0.1, 0.1, 0.2, 0.15, 0.3, 0.1, 0.4, 0.15, 0.5, 0.1)")
+    e = ev("last()")
+    check(ev("ns.Draw.tool") == "path" and ev("arrowTool:GetText()") == "Arrow", "choosing Path puts Arrow away")
+    check(ev("#elements()") == 2 and near(e.x, e.y, 0.5, 0.1) and ev("pts(last())") == "-1600 0 -1200 200 -800 0 -400 200",
+          f"Path follows the pointer, point by point ({ev('pts(last())')})")
+    check(ev("linesShown(tokenOf(last()))") == 6, "drawn as a line a segment and the same two barbs")
+
+    lua.execute("""
+        cursorTo(0.05, 0.5)
+        canvas.scripts.OnMouseDown(canvas, "LeftButton")
+        for i = 1, 300 do
+            cursorTo(0.05 + i * 0.003, 0.5 + (i % 2) * 0.03)
+            canvas.scripts.OnUpdate(canvas)
+        end
+        canvas.scripts.OnMouseUp(canvas, "LeftButton")
+        long = last()
+    """)
+    points = ev("#long.data.pts / 2")
+    check(10 <= points <= 40 and ev("long.data.pts[1] == math.floor((0.05 - long.x) * 4000 + 0.5)"),
+          f"a path of 300 pointer moves is thinned to a bounded number of points, from the same start ({points:.0f})")
+
+    lua.execute("click(swatch) stroke(0.2, 0.8, 0.4, 0.8)")
+    colour = ev("(function() local c = tokenOf(last()).lines[1]._color return ('%.2f %.2f %.2f'):format(c[1], c[2], c[3]) end)()")
+    check((ev("last().data.color"), ev("arrow.data.color"), colour) == (2, 1, "1.00 0.82 0.00"),
+          f"the swatch changes the colour of what is drawn next, and of nothing already drawn ({colour})")
+
+    lua.execute("""
+        token = tokenOf(arrow)
+        token.scripts.OnDragStart(token)
+        cursorTo(0.7, 0.7)
+        token.scripts.OnUpdate(token)
+        token.scripts.OnDragStop(token)
+    """)
+    check(near(ev("arrow.x"), ev("arrow.y"), 0.7, 0.7) and ev("pts(arrow)") == "-1600 -800"
+          and ev("ends(token.lines[1])") == ev("span(0.3, 0.5, 0.7, 0.7)"),
+          f"dragging its end moves the whole arrow ({ev('ends(token.lines[1])')})")
+    lua.execute("ns.History:Undo()")
+    check(near(ev("arrow.x"), ev("arrow.y"), 0.6, 0.5), "and undo puts it back")
+
+    lua.execute("before = #elements() click(strip.copyButton)")
+    check(ev("#elements() == before and elements()[1].data.pts ~= arrow.data.pts and pts(elements()[1]) == pts(arrow)"),
+          "a copied slide has the same paths, with points of its own")
+    lua.execute("click(strip.deleteButton) ns.SwitchSlide(1, true)")
+
+    lua.execute("""
+        ns.ShowPresentation()
+        RaidMapPresentFrame.canvas:SetSize(400, 300)
+        shownThere = tokenOf(arrow, RaidMapPresentFrame.tokens)
+    """)
+    check(ev("shownThere ~= nil and linesShown(shownThere) == 3"), "the present window draws them too")
+    lua.execute("RaidMapPresentFrame:Hide()")
+
+    lua.execute("token = tokenOf(arrow) token.scripts.OnClick(token, 'RightButton')")
+    check(ev("#elements() == before - 1 and tokenOf(arrow) == nil"), "right-clicking its end deletes it")
+    lua.execute("""
+        local slide = ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide]
+        ns.Model:ClearSlide(slide)
+        click(palette[1])
+        marker = tokenOf(last())
+        table.insert(slide.elements, { id = 999, kind = "hologram", x = 0.5, y = 0.5, data = {} })
+        ns.Events:Fire("ELEMENTS_CHANGED")
+    """)
+    check(ev("linesShown(marker) == 0 and marker:GetFrameLevel() == canvas:GetFrameLevel() + 2"),
+          "a token that was a path a moment ago keeps none of its lines")
+    check(ev("layer.pool[2] ~= nil and not layer.pool[2]:IsShown()"), "an element of a kind this version does not know is left undrawn")
+    lua.execute("table.remove(ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide].elements) ns.Events:Fire('ELEMENTS_CHANGED')")
+
+    lua.execute("click(pathTool) before = #elements() stroke(0.2, 0.3, 0.6, 0.5)")
+    check(ev("ns.Draw.tool == nil and #elements() == before") and ev("pathTool:GetText()") == "Path", "clicking the armed tool puts it away")
 
     print("  -- framing")
     lua.execute("""

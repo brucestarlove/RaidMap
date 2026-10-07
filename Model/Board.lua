@@ -61,6 +61,7 @@ have a single implementation.
 	kind = "player"  data.name, data.class, data.spec   (Phase 2)
 	kind = "role"    data.role
 	kind = "text"    data.text
+	kind = "path"    data.pts, data.color   (arrows and drawn paths, see PathShape)
 ]]
 function Model:NewElement(board, kind, x, y, data)
 	return {
@@ -70,6 +71,32 @@ function Model:NewElement(board, kind, x, y, data)
 		y = clamp01(y or 0.5),
 		data = data or {},
 	}
+end
+
+--[[
+A path runs through a list of points and ends in an arrowhead; an arrow is the
+two-point case. The element sits at that end, so it has a position like any
+token and moving it moves the whole path. The points before the end are stored
+relative to it, tail first, as { dx, dy, dx, dy, ... } in whole 1/PATH_UNITS of
+the map.
+
+Whole numbers because a drawn path is nearly all coordinates, and one of these
+is two bytes on the wire where a float is eight. 4000 keeps every offset inside
+the serializer's two-byte range and is about a pixel at full zoom.
+]]
+Model.PATH_UNITS = 4000
+
+-- points is { { x, y }, ... }, normalized, at least two of them.
+function Model:PathShape(points)
+	local tip = points[#points]
+	local x, y = clamp01(tip[1]), clamp01(tip[2])
+
+	local pts = {}
+	for i = 1, #points - 1 do
+		pts[#pts + 1] = math.floor((clamp01(points[i][1]) - x) * self.PATH_UNITS + 0.5)
+		pts[#pts + 1] = math.floor((clamp01(points[i][2]) - y) * self.PATH_UNITS + 0.5)
+	end
+	return x, y, pts
 end
 
 local function indexOf(list, item)
@@ -186,9 +213,18 @@ function Model:ClearSlide(slide)
 	ns.Events:Fire("ELEMENTS_CHANGED")
 end
 
+-- One level down is as deep as an element's data goes: a path's points, which
+-- the copy must not share with the slide it was copied from.
 local function copyData(data)
 	local copy = {}
-	for k, v in pairs(data or {}) do copy[k] = v end
+	for k, v in pairs(data or {}) do
+		if type(v) == "table" then
+			local inner = {}
+			for i, item in pairs(v) do inner[i] = item end
+			v = inner
+		end
+		copy[k] = v
+	end
 	return copy
 end
 

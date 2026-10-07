@@ -43,6 +43,11 @@ Type `/rm` (or `/raidmap`) to open the editor.
   list on the left the same way. Role tokens number themselves (T1, T2, H1...)
   and mean the same thing to anyone you share with; names only mean something
   to your own raid.
+- **Arrows and paths.** Click **Arrow** or **Path** in the toolbar, then drag
+  on the map: an arrow runs straight from where you press to where you let go,
+  a path follows the pointer. The tool stays on until you click it again, and
+  the swatch beside it picks the colour of the next one. Drag the end with the
+  arrowhead to move one, right-click there to delete it.
 - **Mouse.** Left-drag moves a token, right-click deletes it. Right-drag pans
   the map and the wheel zooms. Each slide remembers its own framing.
 - **Notes** sit beside the map, per slide or for the whole board.

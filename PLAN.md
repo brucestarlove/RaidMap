@@ -233,9 +233,10 @@ UI/       main frame, roster panel, filmstrip, notes, toolbar.
 
 **Model shape:**
 
-- One generic `Element` with variants: `player`, `role`, `marker`, `arrow`,
-  `text`, `shape`. Arrows are two-anchor elements. Keeps serializer, undo, and
-  hit-testing single-implementation.
+- One generic `Element` with variants: `player`, `role`, `marker`, `path`,
+  `text`, `shape`. A `path` is a run of points ending in an arrowhead, and an
+  arrow is its two-point case. Keeps serializer, undo, and hit-testing
+  single-implementation.
 - Positions are **normalized `{x, y}` in [0,1]** against the map layer, so zoom,
   resize, and differing client resolutions are free.
 - Art refs are polymorphic from day one:
@@ -425,6 +426,23 @@ left the framing behind. Undo/redo fires `SLIDES_CHANGED` as well as
 what puts the `~` on the pack's name without waiting for something else to
 redraw the dropdown.
 
+**Arrows and drawn paths are one element kind, `path`** (`UI/Draw.lua`,
+`Model:PathShape`, 2026-10-07). The element sits at the end the arrowhead is
+on and stores the points before it as whole-number offsets from there, so it
+has a position like any token: moving, deleting, undo, copying a slide and
+publishing needed nothing new. Its token is the handle at that end and owns
+the lines, which are placed in canvas pixels, so thickness and head keep their
+size at any zoom. Arrow and Path are toolbar tools that stay armed until
+clicked again; a left-drag on bare map draws, and a token under the pointer
+still takes the mouse first. A path that reaches 40 points drops every other
+one and samples half as often, so no stroke is unbounded. Measured on the
+wire: about 32 bytes an arrow, 175 for a path at the cap. A client older than
+this leaves `path` elements undrawn; from here on an unknown kind is skipped
+rather than drawn as whatever its pooled token was last. `CreateLine` /
+`SetStartPoint(point, frame, x, y)` are called the way Attune and
+AtlasLootClassic call them in the Anniversary client. **Not yet seen in game:**
+any of it, including how the lines read over map art.
+
 ### Phase 4 — Sync
 
 **Status: ✅ VERIFIED on two clients (two subscriptions). Board publish, slide
@@ -557,7 +575,7 @@ click lands in the same delta machinery as a publish and only fetches boards the
 clicker lacks.
 
 ### Deferred (explicitly out of MVP)
-Freehand drawing, arrow animation, timeline/reminders, DBM/BigWigs-triggered
+Arrow animation, timeline/reminders, DBM/BigWigs-triggered
 auto-advance, WeakAuras-style companion app.
 
 ---
