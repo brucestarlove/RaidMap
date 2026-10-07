@@ -1,26 +1,27 @@
 # RaidMap
 
-A raid strategy board for World of Warcraft. Put markers, role tokens and your
-raiders' names on the game's own maps, split a fight into slides, write notes
-beside them, and show the result to your raid.
+An easy-to-use WoW addon for managing visual raid assignments on maps.
 
-Works on **TBC Anniversary** (2.5.x) and **WoW Forever** (1.60.x) from the same
-download.
+Put markers, role tokens and your
+raiders' names on the game's own maps, split a fight into slides, write notes beside them, and share the pack to your raid (or export online).
 
-Created by Lavitz Starlove
+Works on **WoW Forever** (1.60.x) and **TBC Anniversary** (2.5.x) and from the same download.
 
-> Early version. Building and presenting a plan is the solid part. Sending
-> plans between players is newer and has had much less testing in real raids.
+> Still testing heavily. Please [submit bugs here!](https://github.com/brucestarlove/RaidMap/issues)
 
-## Install
+![screenshot](./RaidMap.webp)
+
+## Install (.zip)
+
+> Soon submitting to CurseForge.
 
 1. On the [releases page](../../releases), download **`RaidMap.zip`** from the
    newest release. Not "Source code (zip)", which is listed right beside it:
    that one unpacks to a folder the game will not load.
 2. Unzip it into your AddOns folder. The zip already contains a folder named
    `RaidMap`, so you should end up with:
-   - TBC Anniversary: `World of Warcraft\_anniversary_\Interface\AddOns\RaidMap\RaidMap.toc`
    - WoW Forever beta: `World of Warcraft\_classic_beta_\Interface\AddOns\RaidMap\RaidMap.toc`
+   - TBC Anniversary: `World of Warcraft\_anniversary_\Interface\AddOns\RaidMap\RaidMap.toc`
 3. Restart the game. A `/reload` does not pick up a newly installed addon.
 
 The folder has to be called exactly `RaidMap` and sit directly in `AddOns`. If
@@ -67,7 +68,7 @@ Type `/rm` (or `/raidmap`) to open the editor.
 
 ## Credits
 
-Created by Lavitz Starlove.
+Created by *Lavitz Starlove*.
 
 RaidMap bundles these libraries, each under its own licence: LibStub and
 ChatThrottleLib (public domain), CallbackHandler-1.0, AceDB-3.0 and AceComm-3.0
