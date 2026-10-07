@@ -1,0 +1,2695 @@
+{
+ "build": "1.60.1.70205",
+ "created": "2026-10-03",
+ "curated": {
+  "ahnqiraj": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ]
+  },
+  "arcatraz": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ]
+  },
+  "auchenaicrypts": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "battleforgilneas": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "blackfathomdeeps": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ]
+   ]
+  },
+  "blackmorass": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "blackrockdepths": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "blackrockspire": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ]
+  },
+  "blacktemple": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ]
+   ]
+  },
+  "blackwinglair": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ]
+  },
+  "bloodfurnace": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "botanica": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "dalaran": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "deadmines": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "diremaul": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ]
+  },
+  "gnomeregan": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ]
+  },
+  "gruulslair": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "hellfireramparts": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "hyjalsummit": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "karazhan": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     0,
+     9
+    ],
+    [
+     0,
+     10
+    ],
+    [
+     0,
+     11
+    ],
+    [
+     0,
+     12
+    ],
+    [
+     0,
+     13
+    ],
+    [
+     0,
+     14
+    ],
+    [
+     0,
+     15
+    ],
+    [
+     0,
+     16
+    ],
+    [
+     0,
+     17
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     0,
+     9
+    ],
+    [
+     0,
+     10
+    ],
+    [
+     0,
+     11
+    ],
+    [
+     0,
+     12
+    ],
+    [
+     0,
+     13
+    ],
+    [
+     0,
+     14
+    ],
+    [
+     0,
+     15
+    ],
+    [
+     0,
+     16
+    ],
+    [
+     0,
+     17
+    ]
+   ]
+  },
+  "magistersterrace": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "magtheridonslair": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "manatombs": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "maraudon": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "mechanar": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "moltencore": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "naxxramas": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ]
+   ]
+  },
+  "oldhillsbrad": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "onyxiaslair": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "ragefire": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "razorfendowns": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "razorfenkraul": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "ruinsofahnqiraj": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "ruinsoflordaeron": {
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "scarletmonastery": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ]
+   ]
+  },
+  "scholomance": {
+   "wow_anniversary": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  "serpentshrine": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "sethekkhalls": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "shadowfangkeep": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     0,
+     7
+    ]
+   ]
+  },
+  "shadowlabyrinth": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "shatteredhalls": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "slavepens": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "steamvault": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "stockade": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "stratholme": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "sunkentemple": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "sunwellplateau": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "tempestkeep": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "uldaman": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "underbog": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "wailingcaverns": {
+   "wow_anniversary": [
+    [
+     0,
+     1
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "zulaman": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "zulfarrak": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "zulgurub": {
+   "wow_anniversary": [
+    [
+     0,
+     0
+    ]
+   ],
+   "wow_classic_beta": [
+    [
+     0,
+     0
+    ]
+   ]
+  }
+ },
+ "folders": [
+  "10_17_blackempire_scenario",
+  "11_continent",
+  "70blacktemplelegion",
+  "80warfrontsarathih",
+  "80warfrontsarathimain",
+  "aberrus_raid",
+  "abyssalmawshamanacquisition",
+  "acherus",
+  "ahnkahet",
+  "ahnqiraj",
+  "ahnqirajthefallenkingdom",
+  "alliance_hd",
+  "alterac",
+  "alterac_c60",
+  "alteracvalley",
+  "alteracvalleyclassic",
+  "amirdrassil",
+  "amirdrassil_old",
+  "ammenvalestart",
+  "ancientmogucrypt",
+  "arathi",
+  "arathi_terrain1",
+  "arathibasin",
+  "arathibasinupdate",
+  "arathibasinwinter",
+  "arathorcanyons",
+  "arauknashal",
+  "arauknashalintroscenario",
+  "arcanenexus",
+  "arcwayscenario",
+  "ardenweald",
+  "ardenwealdgarden",
+  "argus",
+  "arguscore",
+  "argusdungeon",
+  "argusmacaree",
+  "argusraid",
+  "argussurface",
+  "artifactbrewmasterscenario",
+  "artifactskywall",
+  "artifactsubtletyrogueacquisition",
+  "ashenvale",
+  "ashran",
+  "ashranalliancefactionhub",
+  "ashranhordefactionhub",
+  "assaultonbrokenshorescenario",
+  "aszhara",
+  "aszunadungeon",
+  "aszunadungeonexterior",
+  "auchenaicrypts",
+  "azeritebg",
+  "azeroth",
+  "azjkahet",
+  "azjkahet_lower",
+  "azjolnerub",
+  "azsuna",
+  "azsunaartifact",
+  "azsunainvasionscenario",
+  "azuremystisle",
+  "azuremystislescenario",
+  "azuremystscenario",
+  "badlands",
+  "badlands_c60",
+  "banethilbarrowden",
+  "baradinhold",
+  "barrens",
+  "bastion",
+  "battleforblackrockmountain",
+  "blackfathomdeeps",
+  "blackrock",
+  "blackrockcaverns",
+  "blackrockdepths",
+  "blackrockdepths_anniv",
+  "blackrockpetbattle",
+  "blackrockscenario",
+  "blackrockspire",
+  "blackrocktraindepotdungeon",
+  "blackrookholddungeon",
+  "blackrookholdscenario",
+  "blacktemple",
+  "blacktemplescenario",
+  "blackwingdescent",
+  "blackwingdescentscenario",
+  "blackwinglair",
+  "bladesedgemountains",
+  "blastedlands",
+  "blastedlands_terrain1",
+  "bloodmystisle",
+  "boraluscity",
+  "boreantundra",
+  "brackenhidehollow",
+  "brawlgararena",
+  "brewmasterscenario01",
+  "brewmasterscenario03",
+  "brokenisles",
+  "brokenshore",
+  "brokenshoreintro",
+  "brokenshorepaladin",
+  "brokerdungeonstormheim",
+  "brokerentrance",
+  "brokerisland_shatteredgrove",
+  "brokerisland_vestibule",
+  "burningsteppes",
+  "campnarachestart",
+  "caveofthebloodtotemscenario",
+  "celestialchallenge",
+  "centaurplanes",
+  "chamberofheart",
+  "cinderbrewmeadery",
+  "cityofechos",
+  "cityofgold",
+  "cityofthreadsdungeon",
+  "coilfangreservoir",
+  "coldridgevalley",
+  "coldridgevalleyscenario",
+  "conductor_ardenweald",
+  "conductor_bastion",
+  "conductor_maldraxxus",
+  "conductor_revendreth",
+  "cookingimpossible",
+  "cosmic",
+  "cothillsbradfoothills",
+  "cotmounthyjal",
+  "cotstratholme",
+  "cottheblackmorass",
+  "covenant_ard_bot",
+  "covenant_bas_a",
+  "covenant_drust_ard",
+  "covenant_mal",
+  "covenant_pathofascension",
+  "covenant_rev_a",
+  "crapopolis",
+  "crucibleofstorms_bottom",
+  "crystalsongforest",
+  "dalaran",
+  "dalaran7",
+  "dalaran70",
+  "dalaran_scenario",
+  "dalarancity",
+  "darkflamecleft",
+  "darkheartthicket",
+  "darkmoonfaireisland",
+  "darkshore",
+  "darkshore2115tyrande",
+  "darkshoreoutdoor",
+  "darkspearisland",
+  "darnassis",
+  "darnassus",
+  "darrowmerelake",
+  "dawnbreaker",
+  "dawnoftheinfinite",
+  "deadmineswestfall",
+  "deadwindpass",
+  "deathknellstart",
+  "deepholm",
+  "deepholmshamanacquisition",
+  "deepruntram",
+  "defenseofkarabor",
+  "delve_earthcrawl_01",
+  "delve_evolvednerubian_01",
+  "delve_fungarian_01",
+  "delve_goblin_01",
+  "delve_kobolds_01",
+  "delve_kobolds_02",
+  "delve_kobyss_01",
+  "delve_kobyss_02",
+  "delve_myomancer_01",
+  "delve_nerubian_02",
+  "delve_nerubian_04",
+  "delve_nightfall_01",
+  "delve_skitteringbreach_01",
+  "delve_spiralweave_01",
+  "delve_z2oldgod_01",
+  "delve_zekvirslair_01",
+  "delvefungarian01",
+  "delves_goblin_demodome_02",
+  "demonhunterorderhallterrain",
+  "deotherside_ardenweald",
+  "desolace",
+  "desolace_c60",
+  "diremaul",
+  "dornogal",
+  "draenor",
+  "draenorauchindoun",
+  "dragonacademy",
+  "dragonblight",
+  "dragonblightchromiescenario",
+  "dragonisles",
+  "dragonisles_tp",
+  "dragonsoul",
+  "draktharonkeep",
+  "dreadscarrift",
+  "dreadwastes",
+  "dreamtree",
+  "dreamtreeraid",
+  "drustvar",
+  "dunmorogh",
+  "dunmoroghscenario",
+  "durotar",
+  "duskwood",
+  "dustwallow",
+  "dustwallow_terrain1",
+  "dustwallowmarshscenario",
+  "dustwallowmarshscenarioalliance",
+  "earthenbatleground",
+  "earthenstarter",
+  "earthenworks",
+  "easternkingdoms",
+  "easternplaguelands",
+  "easternplaguelands_c60",
+  "easttemple",
+  "echoislesstart",
+  "elwynn",
+  "emberdeepscenario",
+  "emeralddream_df",
+  "emeralddreamway",
+  "endtime",
+  "eternalpalace_a",
+  "eversongwoods",
+  "eversongwoodsek",
+  "expansion01",
+  "felwingledgemardumarea",
+  "felwood",
+  "feralas",
+  "firelands",
+  "firelandsshaman",
+  "foundryraid",
+  "frostfireridge",
+  "frostmanehold",
+  "frostmanehovel",
+  "garrisonffhorde_tier1",
+  "garrisonffhorde_tier2",
+  "garrisonffhorde_tier3",
+  "garrisonsmvalliance_tier1",
+  "garrisonsmvalliance_tier2",
+  "garrisonsmvalliance_tier3",
+  "garrisonsmvalliance_tier4",
+  "gatesoforgrimmar_portalroom",
+  "ghostlands",
+  "gilneas",
+  "gilneas_terrain1",
+  "gilneas_terrain2",
+  "gilneasbattleground2",
+  "gilneascity",
+  "gilneasdreamway",
+  "gilneasisland",
+  "gloamingreef",
+  "gnomeregan",
+  "gnomereganpetbattle",
+  "goldrush",
+  "goldrush_updated",
+  "gorgrond",
+  "gorgrondscenario",
+  "greatsea_classic",
+  "greatseaalliance",
+  "greatseahorde",
+  "greymanemanor",
+  "grimbatol",
+  "grizzlyhills",
+  "gruulslair",
+  "gundrak",
+  "hallofawakening",
+  "hallofcommunion",
+  "hallowfall_spreadinglight",
+  "hallsofatonement_a",
+  "hallsofinfusion",
+  "hallsoflightning",
+  "hallsoforigination",
+  "hallsoforiginationscenario",
+  "hallsofreflection",
+  "hallsofvalor",
+  "hallsofvalorwarriorclassmount",
+  "harandar",
+  "heartoffear",
+  "helheim",
+  "helheimdungeondock",
+  "helheimraid",
+  "hellfire",
+  "hellfireraid",
+  "hellfireramparts",
+  "helmouthshallows",
+  "highmaulraid",
+  "highmountain",
+  "highmountaininvasionscenario",
+  "hillsbradfoothills",
+  "hillsbradfoothillsbg",
+  "hilsbrad",
+  "hinterlands",
+  "hoascenarioemeralddreamlowerleft",
+  "hoatwilighthighlandsdragon",
+  "horde_hd",
+  "houroftwilight",
+  "howlingfjord",
+  "hrothgarslanding",
+  "htvaleofeternalblossoms",
+  "hulnflashback",
+  "hyjal",
+  "hyjal_camelot",
+  "hyjal_terrain1",
+  "icecrowncitadel",
+  "icecrowncitadeldeathknight",
+  "icecrowndeathknight",
+  "icecrownglacier",
+  "invasionpointaurinor",
+  "invasionpointbonich",
+  "invasionpointcengar",
+  "invasionpointnaigtal",
+  "invasionpointsangua",
+  "invasionpointval",
+  "irondocks",
+  "ironforge",
+  "islandcrestfall",
+  "islanddreadchain",
+  "islandhavenswood",
+  "islandjorundall",
+  "islandmoltencay",
+  "islandrottingmire",
+  "islands",
+  "islandskitteringhollow",
+  "islandsnowblossomvilliage",
+  "islandstropical",
+  "islandverdantwilds",
+  "islandwhisperingreef",
+  "isleofconquest",
+  "isleofdorn",
+  "isleofgiants",
+  "isleofthethunderking",
+  "isleofthethunderkingscenario",
+  "jt_a",
+  "kalidar",
+  "kalimdor",
+  "karazhan",
+  "karazhanscenario",
+  "karesh",
+  "kezan",
+  "kezandungeon",
+  "khazalgar",
+  "khazalgar_proscenium",
+  "kingsrest",
+  "korthia",
+  "krasarang",
+  "krasarang_terrain1",
+  "krasarangalliance",
+  "krasaranghorde",
+  "krasarangpatience",
+  "kultiras",
+  "kultiraspiratetowndungeon",
+  "kultirastaxi",
+  "kultirastaxi_detailed",
+  "kunlaipassscenario",
+  "kunlaisummit",
+  "kunlaisummitscenario",
+  "lakewintergrasp",
+  "legionkarazhandungeon",
+  "legionvioletholddungeon",
+  "lightforgeddraeneiswamp",
+  "lightforgedvindicaar",
+  "lochmodan",
+  "lordaerongarrison",
+  "lostcityoftolvir",
+  "lostglacierdkmountscenario",
+  "maelstromshaman",
+  "maelstromshamanhubintro",
+  "magecampaigntheoculus",
+  "mageclassshrine",
+  "magistersterrace",
+  "magtheridonslair",
+  "maldraxxus",
+  "malornesnightmare",
+  "manatombs",
+  "mapprogress",
+  "maraudon",
+  "mardumtheshatteredabyss",
+  "mawmaxlevel",
+  "mechagondungeon",
+  "mechagondungeonexterior",
+  "mechagonisland",
+  "minorthreatuldum",
+  "minorthreatvale",
+  "mistsoftirnescithe",
+  "mogushanpalace",
+  "mogushanpalacescenario",
+  "mogushanvaults",
+  "moltencore",
+  "moltenfront",
+  "monkorderhallthewanderingisle",
+  "moonglade",
+  "mrrglblight",
+  "mulgore",
+  "mulgore_c60",
+  "murderrow",
+  "nagrand",
+  "nagranddraenor",
+  "nathriaraid_a",
+  "nathriascenario",
+  "naxxramas",
+  "nazjatar",
+  "nazjatarraidentrance",
+  "nazmir",
+  "necroticwake_a",
+  "neltharionslair",
+  "neltharus",
+  "nerubar",
+  "nerubar_lower",
+  "nerubardungeon",
+  "nerubianpalaceraid",
+  "netherlighttemple",
+  "netherstorm",
+  "netherstormarena",
+  "newqueldanas",
+  "newtinkertownstart",
+  "newzulaman",
+  "nexus8",
+  "nexus80",
+  "nightholdscenario",
+  "nightmareraid",
+  "niskara",
+  "northrend",
+  "northrendupdated",
+  "northshire",
+  "npe",
+  "npe_dungeon_a",
+  "npe_dungeon_c",
+  "nzothraid",
+  "ogremines",
+  "ogrimmar",
+  "oldironforge",
+  "onyxiaslair",
+  "orgrimmar",
+  "orgrimmarraid",
+  "orgrimmarraidscenario",
+  "oribos",
+  "oribos_arbiter",
+  "outland_updated",
+  "overgrownoutpost",
+  "pandarenrevolution",
+  "pandaria",
+  "pathofprogenitor",
+  "petbattlestratholme",
+  "pitofsaron",
+  "pitofsarondk",
+  "plaguefall",
+  "plaguefall_b",
+  "plainsofohnahra",
+  "plunderstorm_arathi",
+  "priestclassmountscenario",
+  "primalistraid",
+  "primalisttomorow",
+  "prisondungeon",
+  "prisonofink",
+  "progenitor_raid",
+  "provinggrounds",
+  "ragefire",
+  "razorfendowns",
+  "razorfenkraul",
+  "redridge",
+  "redridge_c60",
+  "revendreth",
+  "riverlands",
+  "rookerydungeon",
+  "rubylifepools",
+  "ruinsofahnqiraj",
+  "ruinsofgilneas",
+  "ruinsofgilneascity",
+  "ruinsoflordaeronscenario",
+  "sacredflame",
+  "sanguinedepths_a",
+  "sanguinedepths_b",
+  "scarletcathedral",
+  "scarletenclave",
+  "scarlethalls",
+  "scarlethallsdarkranger",
+  "scarletmonastery",
+  "scarletmonestarydk",
+  "scholomance",
+  "scholomanceold",
+  "searinggorge",
+  "sethekkhalls",
+  "shadowfangkeep",
+  "shadowglenstart",
+  "shadowlabyrinth",
+  "shadowmoondungeon",
+  "shadowmoonvalley",
+  "shadowmoonvalleydr",
+  "shadowpanhideout",
+  "shattrathcity",
+  "shendralas",
+  "sholazarbasin",
+  "shrineofsevenstars",
+  "shrineofthestorm",
+  "siegeofboralus",
+  "siegeofniuzaotemple",
+  "silithus",
+  "silithus_aniv",
+  "silithus_terrain1",
+  "silithusbrawl",
+  "silvermooncity",
+  "silvermoonek",
+  "silverpine",
+  "sinfallscenario",
+  "sirenisle",
+  "skywall",
+  "smallbattlegroundc",
+  "southernbarrens",
+  "spiresofarak",
+  "spiresofarakdungeon",
+  "spiresofascension_a",
+  "spitescalecavern",
+  "stockadescenario",
+  "stonetalonmountains",
+  "stonevault_foundry",
+  "stormheim",
+  "stormheimartifactprotwarrior",
+  "stormheiminvasionscenario",
+  "stormsong",
+  "stormsongvalley",
+  "stormstoutbrewery",
+  "stormstoutbreweryscenario",
+  "stormwind",
+  "stormwindcity",
+  "strandoftheancients",
+  "stranglethorn",
+  "stranglethornjungle",
+  "stranglethornvale",
+  "stratholme",
+  "stratholmepaladinclassmount",
+  "stvdiamondminebg",
+  "suamarcatacombsdungeon",
+  "sunstriderislestart",
+  "sunwell",
+  "sunwellplateau",
+  "suramar",
+  "suramaracquisition",
+  "suramarnoblesdistrict",
+  "suramarraid",
+  "swampofsorrows",
+  "talador",
+  "taladorscenario",
+  "tanaanjungle",
+  "tanaanjungleintro",
+  "tanaris",
+  "teldrassil",
+  "tempestkeep",
+  "tempkrasaranghordebase",
+  "templeofkotmogu",
+  "templeofsethralissa",
+  "terokkarforest",
+  "terraceofendlessspring",
+  "terraceofendlessspringscenario",
+  "tg10_floor_mm",
+  "tg77_floor_mm",
+  "tg78_floor_mm",
+  "tg81_floor_mm",
+  "tg82_floor_mm",
+  "tg_runecarver",
+  "thaldraszus",
+  "thaldraszus_timeways",
+  "thearcatraz",
+  "theargentcoliseum",
+  "theaterofpain",
+  "theazurespan",
+  "thebastionoftwilight",
+  "thebeyond",
+  "thebloodfurnace",
+  "thebotanica",
+  "thecapeofstranglethorn",
+  "thedeadmines",
+  "thedeadminespetbattle",
+  "thedreamgrove",
+  "theexodar",
+  "theeyeofeternity",
+  "theeyeofeternitymageclassmount",
+  "theforbiddenreach",
+  "theforbiddenreach_full",
+  "theforgeofsouls",
+  "thegreatwall",
+  "thehiddenpass",
+  "thejadeforest",
+  "thejadeforestscenario",
+  "thelostisles",
+  "thelostisles_terrain1",
+  "thelostisles_terrain2",
+  "themaelstrom",
+  "themaelstromcontinent",
+  "themaw",
+  "themechanar",
+  "thenexus",
+  "thenexuslegendary",
+  "theobsidiansanctum",
+  "theoculus",
+  "therubysanctum",
+  "therubysanctumdkmountscenario",
+  "theshadowlands",
+  "theshatteredhalls",
+  "theslavepens",
+  "theslitheringscar",
+  "thesteamvault",
+  "thestockade",
+  "thestonecore",
+  "thestormpeaks",
+  "thesunwellunlockscenario",
+  "thetempleofatalhakkar",
+  "thethroughway_underground",
+  "theunderbog",
+  "thevioletholdacquisition",
+  "thevortexpinnacle",
+  "thewakingshores",
+  "thewanderingisle",
+  "thousandneedles",
+  "threatuldum",
+  "threatvaleofeternalblossoms",
+  "throneofthefourwinds",
+  "throneoftides",
+  "thros",
+  "thunderbluff",
+  "thunderkinglootroom",
+  "thunderkingraid",
+  "thundertotem",
+  "timelessisle",
+  "timeways_blackempire",
+  "timeways_demons",
+  "timeways_hordealliance",
+  "timeways_murlocs",
+  "timeways_robot",
+  "timeways_scourge",
+  "timeways_titans",
+  "tiragarde",
+  "tirisfal",
+  "tirisfal_c60",
+  "tirisfal_terrain1",
+  "tirisfalgladesinsidescenario",
+  "tkarcatrazscenario",
+  "tolbarad",
+  "tolbaraddailyarea",
+  "tolbaradwarlockscenario",
+  "tombofsargerasdungeon",
+  "tombraid",
+  "townlongwastes",
+  "traitorsrest",
+  "tropicalisle",
+  "trueshotlodge",
+  "twilighthighlands",
+  "twilighthighlands_terrain1",
+  "twinpeaks",
+  "twistingnether70",
+  "tyrivess",
+  "tyrsfallscenario",
+  "uldaman",
+  "uldaman_upres",
+  "uldir",
+  "ulduar",
+  "ulduar7",
+  "ulduar77",
+  "ulduarmagni",
+  "uldum",
+  "uldum_terrain1",
+  "unchartedislandscenario",
+  "undercity",
+  "underground",
+  "undermineraid",
+  "underminezone",
+  "underrotexterior",
+  "ungorocrater",
+  "upperblackrockspire",
+  "ursocslairscenario",
+  "utgardekeep",
+  "utgardepinnacle",
+  "valdrakken",
+  "valeofeternalblossoms",
+  "valeofeternalblossomsscenario",
+  "valhallaswarriororderhome",
+  "valleyofpower",
+  "valleyofpowerscenario",
+  "valleyofthefourwinds",
+  "valleyoftrialsstart",
+  "valsharah",
+  "valsharahinvasionscenario",
+  "valsharaslscenario",
+  "vashjir",
+  "vashjirdepths",
+  "vashjirkelpforest",
+  "vashjirruins",
+  "vaultofarchavon",
+  "vaultofmemory",
+  "vaultofthewardens",
+  "vaultofthewardensdh",
+  "violethold",
+  "visionsofnzoth",
+  "voidelfhub",
+  "voidelfscenario",
+  "voidlandsbg",
+  "voidstorm",
+  "volcanothslair",
+  "voldun",
+  "voljinscenario",
+  "von_orgrimmar",
+  "von_stormwind",
+  "vz_arathi",
+  "wailingcaverns",
+  "wailingcavernspetbattle",
+  "warfrontsarathihorde",
+  "warfrontsdarkshorealliance",
+  "warfrontsdarkshorehorde",
+  "warlockclassshrine",
+  "warsonggulch",
+  "warsonggulchupdate",
+  "waterworksdungeon",
+  "waycrest",
+  "wellofeternity",
+  "westernplaguelands",
+  "westfall",
+  "wetlands",
+  "winterspring",
+  "world",
+  "zanchul_lower",
+  "zandalar",
+  "zandalaritreasury",
+  "zandalartaxi",
+  "zandalartaxi_detailed",
+  "zangarmarsh",
+  "zephrasisle",
+  "zerethmortis",
+  "zulaman",
+  "zuldazar",
+  "zuldazarcity_exterior",
+  "zuldazarcity_lower",
+  "zuldazarcity_upper",
+  "zuldazarraid_jaina",
+  "zuldazarraida",
+  "zuldrak",
+  "zulfarrak",
+  "zulgurub"
+ ],
+ "instances": {
+  "109": {
+   "name": "Sunken Temple",
+   "type": "party"
+  },
+  "129": {
+   "name": "Razorfen Downs",
+   "type": "party"
+  },
+  "13": {
+   "name": "Test Dungeon",
+   "type": "party"
+  },
+  "169": {
+   "name": "Emerald Dream",
+   "type": "raid"
+  },
+  "189": {
+   "name": "Scarlet Monastery",
+   "type": "party"
+  },
+  "209": {
+   "name": "Zul'Farrak",
+   "type": "party"
+  },
+  "229": {
+   "name": "Blackrock Spire",
+   "type": "party"
+  },
+  "230": {
+   "name": "Blackrock Depths",
+   "type": "party"
+  },
+  "249": {
+   "name": "Onyxia's Lair",
+   "type": "raid"
+  },
+  "269": {
+   "name": "Caverns of Time",
+   "type": "party"
+  },
+  "2720": {
+   "name": "The Searing Basin",
+   "type": "party"
+  },
+  "2784": {
+   "name": "Demon Fall Canyon",
+   "type": "party"
+  },
+  "2789": {
+   "name": "The Tainted Scar",
+   "type": "raid"
+  },
+  "2791": {
+   "name": "Storm Cliffs",
+   "type": "raid"
+  },
+  "2804": {
+   "name": "The Crystal Vale",
+   "type": "raid"
+  },
+  "2806": {
+   "name": "Shadow Hold",
+   "type": "party"
+  },
+  "2807": {
+   "name": "Burning of Andorhal",
+   "type": "party"
+  },
+  "2817": {
+   "name": "Starfall Barrow Den",
+   "type": "party"
+  },
+  "2832": {
+   "name": "Nightmare Grove",
+   "type": "raid"
+  },
+  "2853": {
+   "name": "Deadwind Pass",
+   "type": "party"
+  },
+  "2856": {
+   "name": "Scarlet Enclave",
+   "type": "raid"
+  },
+  "2875": {
+   "name": "Karazhan Crypts",
+   "type": "party"
+  },
+  "289": {
+   "name": "Scholomance",
+   "type": "party"
+  },
+  "29": {
+   "name": "CashTest",
+   "type": "party"
+  },
+  "2902": {
+   "name": "The Scarab Dais",
+   "type": "party"
+  },
+  "2921": {
+   "name": "Naxxramas",
+   "type": "party"
+  },
+  "2959": {
+   "name": "City of Dalaran",
+   "type": "party"
+  },
+  "2995": {
+   "name": "Hyjal Crater",
+   "type": "arena"
+  },
+  "2997": {
+   "name": "Darkspear Islands",
+   "type": "pvp"
+  },
+  "2998": {
+   "name": "Excavation Site: Wetlands",
+   "type": "party"
+  },
+  "2999": {
+   "name": "Ruins of Lordaeron",
+   "type": "party"
+  },
+  "30": {
+   "name": "Alterac Valley",
+   "type": "pvp"
+  },
+  "3005": {
+   "name": "Battle for Gilneas",
+   "type": "pvp"
+  },
+  "3065": {
+   "name": "The Hall of Thanes",
+   "type": "party"
+  },
+  "309": {
+   "name": "Zul'Gurub",
+   "type": "raid"
+  },
+  "3109": {
+   "name": "Manor Mistmantle",
+   "type": "party"
+  },
+  "329": {
+   "name": "Stratholme",
+   "type": "party"
+  },
+  "33": {
+   "name": "Shadowfang Keep",
+   "type": "party"
+  },
+  "34": {
+   "name": "Stormwind Stockade",
+   "type": "party"
+  },
+  "349": {
+   "name": "Maraudon",
+   "type": "party"
+  },
+  "36": {
+   "name": "Deadmines",
+   "type": "party"
+  },
+  "389": {
+   "name": "Ragefire Chasm",
+   "type": "party"
+  },
+  "409": {
+   "name": "Molten Core",
+   "type": "raid"
+  },
+  "429": {
+   "name": "Dire Maul",
+   "type": "party"
+  },
+  "43": {
+   "name": "Wailing Caverns",
+   "type": "party"
+  },
+  "44": {
+   "name": "<unused> Monastery",
+   "type": "party"
+  },
+  "469": {
+   "name": "Blackwing Lair",
+   "type": "raid"
+  },
+  "47": {
+   "name": "Razorfen Kraul",
+   "type": "party"
+  },
+  "48": {
+   "name": "Blackfathom Deeps",
+   "type": "party"
+  },
+  "489": {
+   "name": "Warsong Gulch",
+   "type": "pvp"
+  },
+  "509": {
+   "name": "Ruins of Ahn'Qiraj",
+   "type": "raid"
+  },
+  "529": {
+   "name": "Arathi Basin",
+   "type": "pvp"
+  },
+  "531": {
+   "name": "Ahn'Qiraj Temple",
+   "type": "raid"
+  },
+  "533": {
+   "name": "Naxxramas",
+   "type": "raid"
+  },
+  "70": {
+   "name": "Uldaman",
+   "type": "party"
+  },
+  "90": {
+   "name": "Gnomeregan",
+   "type": "party"
+  }
+ },
+ "product": "wow_classic_beta",
+ "uimaps": {
+  "1411": {
+   "name": "Durotar",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1412": {
+   "name": "Mulgore",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1413": {
+   "name": "The Barrens",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1414": {
+   "name": "Kalimdor",
+   "parent": "947",
+   "tiles": 12,
+   "type": 2
+  },
+  "1415": {
+   "name": "Eastern Kingdoms",
+   "parent": "947",
+   "tiles": 12,
+   "type": 2
+  },
+  "1416": {
+   "name": "Alterac Mountains",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1417": {
+   "name": "Arathi Highlands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1418": {
+   "name": "Badlands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1419": {
+   "name": "Blasted Lands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1420": {
+   "name": "Tirisfal Glades",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1421": {
+   "name": "Silverpine Forest",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1422": {
+   "name": "Western Plaguelands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1423": {
+   "name": "Eastern Plaguelands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1424": {
+   "name": "Hillsbrad Foothills",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1425": {
+   "name": "The Hinterlands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1426": {
+   "name": "Dun Morogh",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1427": {
+   "name": "Searing Gorge",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1428": {
+   "name": "Burning Steppes",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1429": {
+   "name": "Elwynn Forest",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1430": {
+   "name": "Deadwind Pass",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1431": {
+   "name": "Duskwood",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1432": {
+   "name": "Loch Modan",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1433": {
+   "name": "Redridge Mountains",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1434": {
+   "name": "Stranglethorn Vale",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1435": {
+   "name": "Swamp of Sorrows",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1436": {
+   "name": "Westfall",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1437": {
+   "name": "Wetlands",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1438": {
+   "name": "Teldrassil",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1439": {
+   "name": "Darkshore",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1440": {
+   "name": "Ashenvale",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1441": {
+   "name": "Thousand Needles",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1442": {
+   "name": "Stonetalon Mountains",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1443": {
+   "name": "Desolace",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1444": {
+   "name": "Feralas",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1445": {
+   "name": "Dustwallow Marsh",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1446": {
+   "name": "Tanaris",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1447": {
+   "name": "Azshara",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1448": {
+   "name": "Felwood",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1449": {
+   "name": "Un'Goro Crater",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1450": {
+   "name": "Moonglade",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1451": {
+   "name": "Silithus",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1452": {
+   "name": "Winterspring",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1453": {
+   "name": "Stormwind City",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1454": {
+   "name": "Orgrimmar",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1455": {
+   "name": "Ironforge",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1456": {
+   "name": "Thunder Bluff",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1457": {
+   "name": "Darnassus",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "1458": {
+   "name": "Undercity",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "1459": {
+   "name": "Alterac Valley",
+   "parent": "1424",
+   "tiles": 12,
+   "type": 6
+  },
+  "1460": {
+   "name": "Warsong Gulch",
+   "parent": "1413",
+   "tiles": 12,
+   "type": 6
+  },
+  "1461": {
+   "name": "Arathi Basin",
+   "parent": "1417",
+   "tiles": 12,
+   "type": 6
+  },
+  "1463": {
+   "name": "Eastern Kingdoms",
+   "parent": "0",
+   "tiles": 1,
+   "type": 2
+  },
+  "1464": {
+   "name": "Kalimdor",
+   "parent": "0",
+   "tiles": 1,
+   "type": 2
+  },
+  "2482": {
+   "name": "Mount Hyjal",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "2521": {
+   "name": "Zephras Isle",
+   "parent": "947",
+   "tiles": 12,
+   "type": 3
+  },
+  "2524": {
+   "name": "Darkspear Islands",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 6
+  },
+  "2548": {
+   "name": "Riverglades",
+   "parent": "1415",
+   "tiles": 12,
+   "type": 3
+  },
+  "2652": {
+   "name": "Shen'dralas",
+   "parent": "1414",
+   "tiles": 12,
+   "type": 3
+  },
+  "2665": {
+   "name": "Zephras Isle",
+   "parent": "0",
+   "tiles": 1,
+   "type": 3
+  },
+  "947": {
+   "name": "Azeroth",
+   "parent": "0",
+   "tiles": 12,
+   "type": 1
+  }
+ }
+}

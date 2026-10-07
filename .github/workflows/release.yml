@@ -1,0 +1,41 @@
+name: Package and release
+
+# Pushing a tag is a release. The packager builds RaidMap.zip, with the addon in
+# a folder named RaidMap, and attaches it to a GitHub release for the tag. It
+# also uploads to each addon site that has both a project ID in RaidMap.toc and
+# a token in this repository's secrets; a site missing either is skipped. A tag
+# with "alpha" or "beta" in its name is marked as such.
+on:
+  push:
+    tags:
+      - '**'
+
+# Needed to create the GitHub release.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+      WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}   # provided by GitHub, nothing to add
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # the whole history, which the changelog is written from
+
+      # -n is "file name:label". The file is plain RaidMap.zip because the
+      # packager's default, RaidMap-<tag>.zip, is also the name GitHub gives its
+      # own "Source code" download for the tag, and that one unpacks to a folder
+      # called RaidMap-<tag>, which the game will not load. The label is what
+      # the addon sites show, and stays the version.
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        with:
+          args: '-n "{package-name}:{project-version}"'

@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.blp binary
+*.tga binary
+
+# Kept out of the source zips GitHub generates, so one of those is at least a
+# clean addon once its folder is renamed. The release zip is the real download.
+/tools export-ignore
+/PLAN.md export-ignore
+/PACKS.md export-ignore
+/.github export-ignore
+/.pkgmeta export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore

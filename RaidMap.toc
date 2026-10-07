@@ -1,0 +1,34 @@
+## Interface: 20506, 16001
+## Title: RaidMap
+## Notes: Raid strategy board - maps, tokens, slides, notes.
+## Author: Lavitz Starlove
+## Version: @project-version@
+## SavedVariables: RaidMapDB
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceComm-3.0\AceComm-3.0.xml
+Libs\LibUIDropDownMenu\LibUIDropDownMenu.xml
+Libs\LibSerialize\LibSerialize.lua
+Libs\LibDeflate\LibDeflate.lua
+
+Core\Init.lua
+Data\Instances.lua
+Core\Catalog.lua
+Core\Census.lua
+Core\Roster.lua
+Core\Serialize.lua
+Core\Comm.lua
+Model\Board.lua
+Model\Pack.lua
+Render\MapCanvas.lua
+Render\Tokens.lua
+UI\Library.lua
+UI\Transfer.lua
+UI\PlaceDrag.lua
+UI\RosterPanel.lua
+UI\Filmstrip.lua
+UI\NotesPanel.lua
+UI\MainFrame.lua
+UI\Presentation.lua

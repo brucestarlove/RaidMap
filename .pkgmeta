@@ -1,0 +1,11 @@
+# Read by the BigWigs packager (https://github.com/BigWigsMods/packager), which
+# builds the zip players download. It packages only files tracked by git and
+# already leaves out anything whose name starts with a dot.
+package-as: RaidMap
+
+# Development material that never ships.
+ignore:
+  - tools
+  - PLAN.md
+  - PACKS.md
+  - README.md
