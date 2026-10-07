@@ -12,6 +12,13 @@ the clock, which only moves when a test advances it.
 So this covers the protocol and the data: who asks for what, what each client
 ends up holding, what survives a rollback. It does not cover bandwidth, the
 UI, or anything the server does to a message.
+
+Whispers are delivered the way each kind of client addresses people. On most
+that is Name or Name-Realm. On WoW Forever a character is a first name and a
+surname with no realm in it, so a world built with surnames only delivers a
+whisper sent to "First-Surname" or "First Surname", and reports senders in one
+of those two forms. That model comes from Blizzard's UI source for the build,
+not from a packet capture: see Pack.WhisperName.
 """
 
 import os
@@ -178,6 +185,14 @@ function packCount()
 end
 """
 
+# What a client with surnames answers, per Blizzard_FrameXMLUtil/Camelot/NameUtil.lua:
+# the second value of the name functions is the surname, not a realm.
+SURNAME_STUBS = r"""
+function UnitName() return NAME, SURNAME end
+UnitNameUnmodified = UnitName
+function RegionalUniqueNamesEnabled() return true end
+"""
+
 FILES = ("Core/Init.lua", "Core/Serialize.lua", "Core/Comm.lua", "Model/Board.lua", "Model/Pack.lua",
          "UI/Transfer.lua")
 
@@ -189,16 +204,20 @@ def check(cond, msg):
 
 
 class Client:
-    def __init__(self, world, name, realm):
-        self.world, self.name, self.realm = world, name, realm
+    def __init__(self, world, name, realm, surname=None):
+        self.world, self.name, self.realm, self.surname = world, name, realm, surname
+        self.label = f"{name} {surname}" if surname else name
         self.online = True
         self.lua = lua51.LuaRuntime(unpack_returned_tuples=True)
         g = self.lua.globals()
         g.NAME, g.REALM = name, realm
         g.BUS = lambda prefix, text, dist, to: world.send(self, prefix, text, dist, to)
         # Every runtime starts from the same seed; ids must not collide by accident.
-        self.lua.execute(f"math.randomseed({sum(name.encode()) * 7919})")
+        self.lua.execute(f"math.randomseed({sum(self.label.encode()) * 7919})")
         self.lua.execute(STUBS)
+        if surname:
+            g.SURNAME = surname
+            self.lua.execute(SURNAME_STUBS)
         load = self.lua.eval("""function(path, src)
             local f = assert(loadstring(src, "@" .. path))
             return f("RaidMap", ns)
@@ -229,18 +248,25 @@ class Client:
             self.lua.execute(f"group.{k} = {'true' if v else 'false'}")
 
     def whisper_names(self):
+        if self.surname:   # the full name only: a first name alone is nobody's address
+            return {f"{self.name}-{self.surname}", f"{self.name} {self.surname}"}
         return {self.name, self.name + "-" + self.realm.replace(" ", "").replace("-", "")}
+
+    def sender_name(self):
+        """How this client's name arrives with a message it sent."""
+        return f"{self.name}{self.world.sender_sep}{self.surname}" if self.surname else self.name
 
     def said(self, text):
         return any(text in line for line in self.lua.eval("printed").values())
 
 
 class World:
-    def __init__(self, realm="Dreamscythe"):
+    def __init__(self, realm="Dreamscythe", sender_sep="-"):
         self.realm, self.clients, self.queue, self.log = realm, [], [], []
+        self.sender_sep = sender_sep
 
-    def join(self, name, **flags):
-        c = Client(self, name, self.realm)
+    def join(self, name, surname=None, **flags):
+        c = Client(self, name, self.realm, surname)
         c.group(**flags)
         self.clients.append(c)
         return c
@@ -256,9 +282,9 @@ class World:
                 got = [c for c in self.clients if c.online and to in c.whisper_names()]
             else:   # group broadcasts echo to the sender too, as in game
                 got = [c for c in self.clients if c.online and c.get("IsInGroup()")]
-            self.log.append({"from": sender.name, "op": op, "dist": dist, "to": to, "got": [c.name for c in got]})
+            self.log.append({"from": sender.label, "op": op, "dist": dist, "to": to, "got": [c.label for c in got]})
             for c in got:
-                c.lua.globals().deliver(prefix, text, dist, sender.name)
+                c.lua.globals().deliver(prefix, text, dist, sender.sender_name())
 
     def run(self, seconds=6):
         self.deliver()
@@ -447,6 +473,61 @@ def test_strings_and_links(realm):
     asked = w.sent(0, "L")
     check(bool(asked) and asked[0]["got"] == ["Aly"], f"clicking it reaches the author (whisper to '{asked[0]['to'] if asked else None}')")
     check(same(uid, a, g), "and the pack arrives")
+    check(not g.said("No answer"), "a link that was answered does not also report a timeout")
+
+    g.lua.globals().hooks.SetItemRef("garrmission:raidmap", shown)
+    w.run(12)
+    check(g.said("You already have") and not g.said("No answer"), "clicking it again says you already have the pack")
+
+    h = w.join("Hal")
+    a.online = False
+    h.lua.globals().hooks.SetItemRef("garrmission:raidmap", shown)
+    w.run(12)
+    check(h.said("No answer from") and h.get("packCount()") == 1, "a link whose author is offline says so instead of hanging")
+
+
+def test_surnames(sep):
+    print(f"\nNames that are a first name and a surname (WoW Forever), sender reported as 'First{sep}Surname'")
+    w = World("Classic Beta PvP 2", sender_sep=sep)
+    a = w.join("Lavitz", "Starlove")
+    g = w.join("Gil", "Marsh")
+    n = w.join("Lavitz", "Brandt")   # shares a first name with the author, and nothing else
+    a.do('ns.Pack:Rename(ns:CurrentPack(), "Kara Week 1"); addMarker(1, 0.25, 0.75); ns.Pack:AddBoard(ns:CurrentPack())')
+    uid = a.get("ns:CurrentPack().uid")
+
+    a.do("ns.LinkPackInChat()")
+    line = a.get("typed")
+    check(line == "[RaidMap: Kara Week 1 from Lavitz-Starlove]", f"the link names the author by surname, not realm: {line}")
+    shown = g.lua.eval("function(line) return (select(2, filters.CHAT_MSG_GUILD(nil, 'CHAT_MSG_GUILD', line, 'Lavitz'))) end")(line)
+    g.lua.globals().hooks.SetItemRef("garrmission:raidmap", shown)
+    w.run()
+    asked = w.sent(0, "L")
+    check(bool(asked) and asked[0]["got"] == ["Lavitz Starlove"], f"clicking it reaches the author and not the namesake (got {asked[0]['got'] if asked else None})")
+    undelivered = [m for m in w.log if m["dist"] == "WHISPER" and not m["got"]]
+    check(not undelivered, f"every whisper in the exchange had a valid address {[(m['op'], m['to']) for m in undelivered] or ''}")
+    check(same(uid, a, g), "and the pack arrives")
+    check(n.get("packCount()") == 1, "the namesake is sent nothing")
+
+    a.lua.globals().hooks.SetItemRef("garrmission:raidmap", shown)
+    check(a.said("That is your own pack"), "the author clicking their own link is recognised")
+
+    print("  -- in a raid")
+    for c in (a, g, n):
+        c.group(raid=True)
+    a.group(leader=True)
+    start = len(w.log)
+    a.do("addMarker(2, 0.5, 0.5); ns.Comm:PublishPack()")
+    w.run()
+    check(same(uid, a, g, n), "a raider who shares the leader's first name still receives the publish")
+    undelivered = [m for m in w.log[start:] if m["dist"] == "WHISPER" and not m["got"]]
+    check(not undelivered, f"requests and boards are whispered to full names {[(m['op'], m['to']) for m in undelivered] or ''}")
+
+    for c in (a, g):
+        c.do('ns.Events:On("REMOTE_FOCUS", function() followed = (followed or 0) + 1 end)')
+    a.do("ns.Comm:PublishFocus(1)")
+    w.run()
+    check(g.get("followed") == 1 and a.get("followed") is None,
+          "the leader's slide change moves the raid, and its echo is recognised as their own")
 
 
 if __name__ == "__main__":
@@ -455,5 +536,7 @@ if __name__ == "__main__":
     test_party()
     test_strings_and_links("Dreamscythe")
     test_strings_and_links("Classic Beta PvP 2")
+    test_surnames("-")
+    test_surnames(" ")
     print(f"\n{len(failures)} failure(s)")
     sys.exit(1 if failures else 0)

@@ -44,6 +44,7 @@ local FIELD = "\2"
 local REQUEST_WINDOW = 1.5
 local BROADCAST_THRESHOLD = 3
 local INCOMING_TIMEOUT = 45
+local LINK_TIMEOUT = 10
 
 local Comm = {}
 ns.Comm = Comm
@@ -57,8 +58,16 @@ local function shortName(name)
 	return (name:match("^[^-]+")) or name
 end
 
-local function me()
-	return shortName(UnitName("player"))
+--[[
+Is this sender our own character? Group broadcasts echo back to whoever sent
+them. The sender arrives as a bare name from our own realm, as Name-Realm from
+another, and on WoW Forever as first name and surname, joined by a hyphen or a
+space. Comparing first names alone would also drop everything from another
+player who merely shares ours.
+]]
+local function isMe(sender)
+	if sender == UnitName("player") then return true end
+	return (sender:gsub(" ", "-")) == ns.Pack.WhisperName()
 end
 
 function Comm:Channel()
@@ -133,7 +142,7 @@ function Comm:PublishPack()
 
 	ns.Pack:PushHistory(pack)
 
-	self.lastUpdate = { from = me(), time = time() }
+	self.lastUpdate = { from = (UnitName("player")), time = time() }
 	self:AnnounceManifest(pack, channel)
 
 	ns:Print("Published \"%s\" rev %d. Sending only what each person is missing.",
@@ -231,7 +240,8 @@ function Comm:FlushRequests(uid)
 		broadcast and "broadcast" or "whisper")
 end
 
-function Comm:ReceiveRequest(data, from)
+-- Keyed by the requester's address, since that is where the boards are sent.
+function Comm:ReceiveRequest(data, sender)
 	local request = ns.Serialize:UnpackFromComm(data)
 	if not request or not request.uid then return end
 
@@ -246,7 +256,7 @@ function Comm:ReceiveRequest(data, from)
 		C_Timer.After(REQUEST_WINDOW, function() self:FlushRequests(request.uid) end)
 	end
 
-	pending.requesters[from] = request.boards or {}
+	pending.requesters[sender] = request.boards or {}
 	for _, boardID in ipairs(request.boards or {}) do
 		pending.boards[boardID] = true
 	end
@@ -279,17 +289,27 @@ function Comm:NeededBoards(manifest)
 	return needed, list
 end
 
-function Comm:ReceiveManifest(data, from)
+function Comm:ReceiveManifest(data, from, sender)
 	local manifest = ns.Serialize:UnpackFromComm(data)
 	if not manifest or not manifest.uid then return end
 
 	local existing = ns.db.profile.packs[manifest.uid]
+	local current = existing and (existing.revision or 0) >= (manifest.revision or 0)
+
+	-- The answer to a link we clicked. Being up to date already is the one
+	-- outcome that would otherwise look exactly like the link doing nothing.
+	local asked = self.linkRequest
+	if asked and manifest.title == asked.title then
+		self.linkRequest = nil
+		if current then
+			ns:Print("You already have \"%s\" (rev %d). It is in the Pack menu.",
+				existing.title or manifest.title, existing.revision or 0)
+		end
+	end
 
 	-- Revision, not arrival order, decides. A replayed or out-of-order publish
 	-- must never clobber something newer.
-	if existing and (existing.revision or 0) >= (manifest.revision or 0) then
-		return
-	end
+	if current then return end
 
 	-- Already fetching exactly this. The lead re-announces on every roster
 	-- change; starting over would drop the boards received so far and ask for
@@ -300,17 +320,17 @@ function Comm:ReceiveManifest(data, from)
 	end
 
 	if ns.db.profile.pauseSync then
-		self.pendingManifest = { manifest = manifest, from = from }
+		self.pendingManifest = { manifest = manifest, from = from, sender = sender }
 		ns:Print("%s published \"%s\" rev %d -- sync is paused, click Apply to take it.",
 			from, manifest.title, manifest.revision or 0)
 		ns.Events:Fire("SYNC_STATUS")
 		return
 	end
 
-	self:StartTransfer(manifest, from)
+	self:StartTransfer(manifest, from, sender)
 end
 
-function Comm:StartTransfer(manifest, from)
+function Comm:StartTransfer(manifest, from, sender)
 	local needed, list = self:NeededBoards(manifest)
 
 	local entry = {
@@ -333,7 +353,7 @@ function Comm:StartTransfer(manifest, from)
 		uid = manifest.uid,
 		revision = manifest.revision,
 		boards = list,
-	}, "request"), "WHISPER", from, "ALERT")
+	}, "request"), "WHISPER", sender or from, "ALERT")
 end
 
 function Comm:ReceiveData(data)
@@ -440,7 +460,7 @@ function Comm:ApplyPending()
 	local pending = self.pendingManifest
 	if not pending then return end
 	self.pendingManifest = nil
-	self:StartTransfer(pending.manifest, pending.from)
+	self:StartTransfer(pending.manifest, pending.from, pending.sender)
 end
 
 -- Legacy whole-pack payload, from a client running the previous version.
@@ -510,8 +530,13 @@ end
 function Comm:OnCommReceived(prefix, message, distribution, sender)
 	if prefix ~= PREFIX then return end
 
+	if isMe(sender) then return end
+
+	-- `from` is for showing to people. Anything whispered back goes to `sender`
+	-- exactly as the client reported it, which is the one form of the name
+	-- known to be a valid address: on WoW Forever the short form is only a
+	-- first name, and need not reach anyone.
 	local from = shortName(sender)
-	if from == me() then return end
 
 	-- Fixed-width header rather than a pattern: the encoded payload can itself
 	-- contain the separator byte.
@@ -520,9 +545,9 @@ function Comm:OnCommReceived(prefix, message, distribution, sender)
 	local data = message:sub(3)
 
 	if op == OP_MANIFEST then
-		self:ReceiveManifest(data, from)
+		self:ReceiveManifest(data, from, sender)
 	elseif op == OP_REQUEST then
-		self:ReceiveRequest(data, from)
+		self:ReceiveRequest(data, sender)
 	elseif op == OP_DATA then
 		self:ReceiveData(data)
 	elseif op == OP_BOARD then
@@ -534,7 +559,7 @@ function Comm:OnCommReceived(prefix, message, distribution, sender)
 	elseif op == OP_SPEC_REQ then
 		self:ScheduleSpecBroadcast(0.5 + math.random() * 4)
 	elseif op == OP_LINK_REQ then
-		self:ReceiveLinkRequest(data, from)
+		self:ReceiveLinkRequest(data, from, sender)
 	end
 end
 
@@ -547,13 +572,26 @@ the same delta machinery as a normal publish -- including only fetching boards
 they do not already have.
 ]]
 function Comm:RequestLinkedPack(author, title)
+	local request = { author = author, title = title }
+	self.linkRequest = request
+
 	send(self, OP_LINK_REQ, title, "WHISPER", author, "ALERT")
+
+	-- A whisper to someone who is offline, on another faction, or not running
+	-- the addon simply never comes back. Say so rather than leave "Asking..."
+	-- as the last word.
+	C_Timer.After(LINK_TIMEOUT, function()
+		if self.linkRequest ~= request then return end
+		self.linkRequest = nil
+		ns:Print("|cffff5555No answer from %s.|r They may be offline, or not running RaidMap.", author)
+	end)
 end
 
-function Comm:ReceiveLinkRequest(title, from)
+function Comm:ReceiveLinkRequest(title, from, sender)
 	-- An empty title is the "I do not have that" reply, not a new request.
 	-- Answering it with another empty request would ping-pong forever.
 	if title == "" then
+		self.linkRequest = nil
 		ns:Print("|cffff5555%s no longer has that pack.|r", from)
 		return
 	end
@@ -567,12 +605,12 @@ function Comm:ReceiveLinkRequest(title, from)
 	end
 
 	if not match then
-		send(self, OP_LINK_REQ, "", "WHISPER", from, "ALERT")
+		send(self, OP_LINK_REQ, "", "WHISPER", sender, "ALERT")
 		return
 	end
 
 	ns:Print("%s asked for \"%s\"; sending it.", from, match.title)
-	self:AnnounceManifest(match, "WHISPER", from)
+	self:AnnounceManifest(match, "WHISPER", sender)
 end
 
 -------------------------------------------------------------------------- spec

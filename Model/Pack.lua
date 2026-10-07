@@ -24,15 +24,34 @@ end
 
 Pack.AuthorName = authorName
 
--- Name-Realm in the form a whisper accepts: the realm without its spaces.
--- AuthorName keeps the display realm, because uids and author fields already
--- saved were minted with it.
+--[[
+The address another client whispers to reach this character. AuthorName keeps
+the display realm instead, because uids and author fields already saved were
+minted with it.
+
+On most clients that is Name-Realm, the realm without its spaces.
+
+WoW Forever has no realm in a character's identity. A name there is a first
+name and a surname, unique across the region, and the name functions hand back
+the surname in the slot where other clients hand back a realm. Name-Realm
+reaches nobody. Blizzard's own chat box takes "First-Surname" or "First
+Surname" as a whisper target (ChatFrameEditBox.lua, ExtractTellTarget); the
+hyphen form is used here because it has no space to lose inside a chat link.
+]]
 function Pack.WhisperName()
+	local name, surname = (UnitNameUnmodified or UnitName)("player")
+	name = name or "?"
+
+	if RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() then
+		local full = (surname and surname ~= "") and (name .. "-" .. surname) or name
+		return (full:gsub(" ", "-"))
+	end
+
 	local realm = GetNormalizedRealmName and GetNormalizedRealmName()
 	if not realm or realm == "" then
 		realm = (GetRealmName() or "?"):gsub("[%s%-]", "")
 	end
-	return (UnitName("player") or "?") .. "-" .. realm
+	return name .. "-" .. realm
 end
 
 local function newUID()
