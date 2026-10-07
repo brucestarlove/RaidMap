@@ -15,6 +15,10 @@ local WINDOW_BACKDROP = {
 
 local RAID_ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 
+-- Height of the row of captions over the dropdowns. Everything under the title
+-- bar sits this much lower to make room for it.
+local CAPTION_ROW = 14
+
 local frame
 
 -- Clamped, because undoing a slide add can leave currentSlide past the end.
@@ -259,7 +263,7 @@ local function CreateWindow()
 
 	-- Row 1: pack -> board -> map, narrowing scope left to right.
 	local packDD, boardDD, refreshLibrary = ns.CreateLibraryDropdowns(frame)
-	packDD:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", -8, -2)
+	packDD:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", -8, -2 - CAPTION_ROW)
 	boardDD:SetPoint("LEFT", packDD, "RIGHT", -16, 0)
 	frame.packDropdown, frame.boardDropdown = packDD, boardDD
 
@@ -270,9 +274,21 @@ local function CreateWindow()
 	LibDD:UIDropDownMenu_Initialize(dropdown, BuildMapMenu)
 	frame.mapDropdown = dropdown
 
+	-- Each dropdown shows only its current choice, which does not say what it
+	-- is a choice of: someone new could not tell the pack from the board. The
+	-- inset lines the caption up with the box, which starts that far inside
+	-- the dropdown's frame.
+	frame.captions = {}
+	for _, pair in ipairs({ { packDD, "Packs" }, { boardDD, "Boards" }, { dropdown, "Maps" } }) do
+		local caption = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		caption:SetPoint("BOTTOMLEFT", pair[1], "TOPLEFT", 20, 0)
+		caption:SetText(pair[2])
+		frame.captions[#frame.captions + 1] = caption
+	end
+
 	local resetZoom = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 	resetZoom:SetSize(90, 20)
-	resetZoom:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -34)
+	resetZoom:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -34 - CAPTION_ROW)
 	resetZoom:SetText("Reset view")
 	resetZoom:SetScript("OnClick", function()
 		frame.canvas:SetView(0.5, 0.5, 1)
@@ -281,7 +297,7 @@ local function CreateWindow()
 	-- Row 2: tools
 	local toolbar = CreateFrame("Frame", nil, frame)
 	toolbar:SetPoint("TOPLEFT", packDD, "BOTTOMLEFT", 16, 0)
-	toolbar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -60)
+	toolbar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -60 - CAPTION_ROW)
 	toolbar:SetHeight(24)
 
 	for i = 1, 8 do
@@ -361,7 +377,7 @@ local function CreateWindow()
 	-- Roster column: header, the list, then the two toggles that say how the
 	-- names in it are drawn on the map.
 	local rosterHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	rosterHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -88)
+	rosterHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -88 - CAPTION_ROW)
 	rosterHeader:SetText("Raid")
 
 	local demoToggle = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
@@ -382,7 +398,7 @@ local function CreateWindow()
 	local TOGGLE_WIDTH = (ns.RosterPanel.WIDTH - 4) / 2
 
 	local roster = ns.CreateRosterPanel(frame)
-	roster:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -106)
+	roster:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -106 - CAPTION_ROW)
 	roster:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 56)
 	frame.roster = roster
 
@@ -462,7 +478,7 @@ local function CreateWindow()
 
 	-- Notes
 	local notes = ns.CreateNotesPanel(frame)
-	notes:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, -88)
+	notes:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, -88 - CAPTION_ROW)
 	notes:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -10, 28)
 	frame.notes = notes
 

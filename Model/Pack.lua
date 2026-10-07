@@ -29,14 +29,17 @@ The address another client whispers to reach this character. AuthorName keeps
 the display realm instead, because uids and author fields already saved were
 minted with it.
 
-On most clients that is Name-Realm, the realm without its spaces.
+On TBC Anniversary, and on any other version this comes to support, that is
+Name-Realm, the realm without its spaces. That form has to keep working.
 
-WoW Forever has no realm in a character's identity. A name there is a first
-name and a surname, unique across the region, and the name functions hand back
-the surname in the slot where other clients hand back a realm. Name-Realm
-reaches nobody. Blizzard's own chat box takes "First-Surname" or "First
-Surname" as a whisper target (ChatFrameEditBox.lua, ExtractTellTarget); the
-hyphen form is used here because it has no space to lose inside a chat link.
+WoW Forever is the exception, and is detected by asking the client rather than
+by flavor, so nothing else is ever sent down its path. It has no realm in a
+character's identity. A name there is a first name and a surname, unique across
+the region, and the name functions hand back the surname in the slot where
+other clients hand back a realm. Name-Realm reaches nobody. Blizzard's own chat
+box takes "First-Surname" or "First Surname" as a whisper target
+(ChatFrameEditBox.lua, ExtractTellTarget); the hyphen form is used here because
+it has no space to lose inside a chat link.
 ]]
 function Pack.WhisperName()
 	local name, surname = (UnitNameUnmodified or UnitName)("player")

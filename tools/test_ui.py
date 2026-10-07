@@ -69,6 +69,8 @@ function M:GetLeft() return self._left or 0 end
 function M:GetTop() return self._top or 0 end
 function M:GetEffectiveScale() return 1 end
 function M:GetPoint() return "CENTER", nil, "CENTER", 0, 0 end
+function M:SetPoint(...) self._points = self._points or {} self._points[#self._points + 1] = { ... } end
+function M:ClearAllPoints() self._points = nil end
 function M:IsMouseOver() return self._mouseOver and true or false end
 
 function M:Show() self._shown = true if self.scripts.OnShow then self.scripts.OnShow(self) end end
@@ -246,6 +248,20 @@ def test_client(label, flavor_setup):
     """)
     check(ev("canvas.drawW") is not None, "canvas lays out the blank map")
     check(ev("#palette") == 11, f"toolbar has 8 marker and 3 role buttons that click and drag ({ev('#palette')})")
+    captions = ev("""(function()
+        local out = {}
+        for _, caption in ipairs(window.captions) do
+            local point, anchor, relative = unpack(caption._points[1])
+            local name
+            for _, global in ipairs({ "RaidMapPackDropDown", "RaidMapBoardDropDown", "RaidMapMapDropDown" }) do
+                if _G[global] == anchor then name = global end
+            end
+            out[#out + 1] = caption:GetText() .. " " .. point .. ">" .. relative .. " " .. tostring(name)
+        end
+        return table.concat(out, ", ")
+    end)()""")
+    check(captions == "Packs BOTTOMLEFT>TOPLEFT RaidMapPackDropDown, Boards BOTTOMLEFT>TOPLEFT RaidMapBoardDropDown, "
+          "Maps BOTTOMLEFT>TOPLEFT RaidMapMapDropDown", f"each dropdown has its caption sitting on top of it ({captions})")
 
     print("  -- markers")
     lua.execute("click(palette[1])")
