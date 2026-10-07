@@ -239,8 +239,13 @@ function ns.CreateMapCanvas(parent)
 	canvas:EnableMouse(true)
 	canvas:EnableMouseWheel(true)
 
+	-- CANVAS_VIEW_MOVED is the user's own zoom or pan and nothing else. Every
+	-- layout fires CANVAS_VIEW_CHANGED, including the ones that load a slide or
+	-- follow a resize, and those are not somebody choosing a framing.
 	canvas:SetScript("OnMouseWheel", function(self, delta)
+		local zoom = self.zoom
 		self:ZoomAtCursor(delta)
+		if self.zoom ~= zoom then ns.Events:Fire("CANVAS_VIEW_MOVED", self) end
 	end)
 
 	canvas:SetScript("OnMouseDown", function(self, button)
@@ -250,7 +255,13 @@ function ns.CreateMapCanvas(parent)
 	end)
 
 	canvas:SetScript("OnMouseUp", function(self, button)
-		if button == "RightButton" then self.panning = nil end
+		if button ~= "RightButton" or not self.panning then return end
+		local from = self.panning
+		self.panning = nil
+		-- Once per drag, and not for a right-click that went nowhere.
+		if self.centerX ~= from.centerX or self.centerY ~= from.centerY then
+			ns.Events:Fire("CANVAS_VIEW_MOVED", self)
+		end
 	end)
 
 	canvas:SetScript("OnUpdate", function(self)

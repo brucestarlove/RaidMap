@@ -46,7 +46,7 @@ Type `/rm` (or `/raidmap`) to open the editor.
 - **Mouse.** Left-drag moves a token, right-click deletes it. Right-drag pans
   the map and the wheel zooms. Each slide remembers its own framing.
 - **Notes** sit beside the map, per slide or for the whole board.
-- **Present** opens a compact read-only view, which is what raiders want open:
+- **Present Mode** opens a compact read-only view, which is what raiders want open:
   it cannot be edited by accident and it follows whoever is presenting.
 
 ### Sharing

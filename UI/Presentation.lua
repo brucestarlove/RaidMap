@@ -166,7 +166,7 @@ local function RefreshStatus()
 		frame.status:SetText(("|cff888888%s -- rev %d|r"):format(update.from, pack.revision or 0))
 	else
 		frame.status:SetText(("|cff666666%s -- rev %d|r")
-			:format(pack.author or "?", pack.revision or 0))
+			:format(ns.Pack.DisplayName(pack.author), pack.revision or 0))
 	end
 end
 

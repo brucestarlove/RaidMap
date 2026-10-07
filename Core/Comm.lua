@@ -131,7 +131,7 @@ function Comm:PublishPack()
 	local pack = ns:CurrentPack()
 
 	if pack.locked and pack.author ~= ns.Pack.AuthorName() then
-		ns:Print("\"%s\" is locked by %s.", pack.title, pack.author)
+		ns:Print("\"%s\" is locked by %s.", pack.title, ns.Pack.DisplayName(pack.author))
 		return
 	end
 

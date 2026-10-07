@@ -103,8 +103,13 @@ function Model:Touch(board)
 	board.rev = (board.rev or 1) + 1
 	board.stamp = math.random(0, 0xFFFF) * 0x10000 + math.random(0, 0xFFFF)
 
+	-- Announced on the first edit since a publish and not on each one after:
+	-- it is the flag turning on that anything has to redraw for.
 	local pack = ns:CurrentPack()
-	if pack then pack.modified = true end
+	if pack and not pack.modified then
+		pack.modified = true
+		ns.Events:Fire("PACK_MODIFIED")
+	end
 end
 
 function Model:AddElement(slide, element)
@@ -210,7 +215,10 @@ function Model:AddSlide(board, copyFromIndex)
 			}
 		end
 	else
-		slide = self:NewSlide("Slide " .. (#board.slides + 1))
+		-- On the map of the slide in view: the next phase is nearly always the
+		-- same room, and the default map is a blank canvas on some clients.
+		local shown = board.slides[board.currentSlide or 1] or board.slides[#board.slides]
+		slide = self:NewSlide("Slide " .. (#board.slides + 1), shown and shown.mapKey)
 	end
 
 	table.insert(board.slides, slide)

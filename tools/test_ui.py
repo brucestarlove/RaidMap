@@ -148,7 +148,21 @@ setmetatable(LibDD, { __index = function(_, k)
     if k == "UIDropDownMenu_CreateInfo" then return function() return {} end end
     return function() end
 end })
+-- Except what a dropdown shows and what its menu lists, which are kept so they
+-- can be read back.
+function LibDD:UIDropDownMenu_SetText(dropdown, text) dropdown._text = text end
+function LibDD:UIDropDownMenu_Initialize(dropdown, build) dropdown.build = build end
+function LibDD:UIDropDownMenu_AddButton(info) menu[#menu + 1] = info.text end
+function menuOf(dropdown)
+    menu = {}
+    dropdown.build(dropdown, 1)
+    return table.concat(menu, " / ")
+end
 """
+
+# WoW Forever as it names people: a first name and a surname, on a realm that
+# is in nobody's name.
+FOREVER = test_compat.FOREVER + 'SURNAME, REALM = "Starlove", "Classic Beta PvP 2"\n' + test_sync.SURNAME_STUBS
 
 HELPERS = r"""
 window = RaidMapFrame
@@ -274,7 +288,7 @@ def client(flavor_setup):
     return lua
 
 
-def test_client(label, flavor_setup):
+def test_client(label, flavor_setup, author):
     print(f"\n{label}")
     try:
         lua = client(flavor_setup)
@@ -303,12 +317,36 @@ def test_client(label, flavor_setup):
             for _, global in ipairs({ "RaidMapPackDropDown", "RaidMapBoardDropDown", "RaidMapMapDropDown" }) do
                 if _G[global] == anchor then name = global end
             end
+            for _, field in ipairs({ "displayToggle", "filmstrip" }) do
+                if window[field] == anchor then name = field end
+            end
             out[#out + 1] = caption:GetText() .. " " .. point .. ">" .. relative .. " " .. tostring(name)
         end
         return table.concat(out, ", ")
     end)()""")
     check(captions == "Packs BOTTOMLEFT>TOPLEFT RaidMapPackDropDown, Boards BOTTOMLEFT>TOPLEFT RaidMapBoardDropDown, "
-          "Maps BOTTOMLEFT>TOPLEFT RaidMapMapDropDown", f"each dropdown has its caption sitting on top of it ({captions})")
+          "Maps BOTTOMLEFT>TOPLEFT RaidMapMapDropDown, Display Names & Icons BOTTOMLEFT>TOPLEFT displayToggle, "
+          "Slides BOTTOMLEFT>TOPLEFT filmstrip",
+          f"each dropdown, the token toggles and the slide strip have a caption sitting on top ({captions})")
+    packs = ev("menuOf(RaidMapPackDropDown)")
+    check(f"My Pack |cff888888({author}, rev 1)|r" in packs, f"the pack list names the author as {author} ({packs.split(' / ')[1]})")
+
+    print("  -- view buttons")
+    lua.execute("""
+        byText = {}
+        for _, f in ipairs(frames) do
+            if f.kind == "Button" and f.parent == window then byText[f:GetText()] = f end
+        end
+        notesButton, presentButton = byText["Display Notes"], byText["Present Mode"]
+    """)
+    check(ev("notesButton ~= nil and presentButton ~= nil and byText['Reset view'] == nil"),
+          "Present Mode and Display Notes are there, Reset view is not")
+    check(ev("notesButton._points[1][2] == window and presentButton._points[1][2] == notesButton"),
+          "Display Notes hangs off the window's corner and Present Mode off Display Notes")
+    lua.execute("before = window.notes:IsShown() click(notesButton)")
+    check(ev("window.notes:IsShown() ~= before"), "Display Notes shows and hides the notes panel")
+    lua.execute("click(notesButton)")
+    check(ev("window.notes:IsShown() == before"), "and a second click puts it back")
 
     print("  -- markers")
     lua.execute("click(palette[1])")
@@ -406,6 +444,8 @@ def test_client(label, flavor_setup):
     print("  -- slide strip")
     current = "ns:CurrentBoard().currentSlide"
     lua.execute("slideCount(3)")
+    maps = ev("(function() local s = ns:CurrentBoard().slides return s[1].mapKey .. ' ' .. s[2].mapKey .. ' ' .. s[3].mapKey end)()")
+    check(maps == "blank blank blank", f"+ opens the new slide on the map of the one it was pressed from ({maps})")
     shown, width = ev("tabsShown()")
     check((shown, width, ev("arrows()")) == ("1 2 3", 104, "") and ev("strip.addButton._points[1][4]") == 321,
           "before the strip is measured, tabs are full width with + straight after the last")
@@ -469,6 +509,74 @@ def test_client(label, flavor_setup):
     lua.execute("popup.EditBox:SetText('gone') StaticPopupDialogs[popup.which].OnAccept(popup, popup.data)")
     check(ev(names) == f"{first}, Slide 4", "and a slide deleted while its popup was open renames nothing")
 
+    print("  -- framing")
+    lua.execute("""
+        function framing(slide)
+            local board = ns:CurrentBoard()
+            local v = (slide or board.slides[board.currentSlide]).view
+            return ("%.2f %.2f x%.2f"):format(v.cx, v.cy, v.zoom)
+        end
+        function showing() return ("%.2f %.2f x%.2f"):format(canvas:GetView()) end
+        function wheel(delta) canvas.scripts.OnMouseWheel(canvas, delta) end
+        function pan(dx, dy)
+            canvas.scripts.OnMouseDown(canvas, "RightButton")
+            cursorX, cursorY = cursorX + dx, cursorY + dy
+            canvas.scripts.OnUpdate(canvas)
+            canvas.scripts.OnMouseUp(canvas, "RightButton")
+        end
+        function mark() return RaidMapPackDropDown:GetText():find("~", 1, true) ~= nil end
+
+        local v = ns:CurrentBoard().slides[1].view
+        v.cx, v.cy, v.zoom = 0.5, 0.5, 1
+        ns:CurrentPack().modified = nil
+        ns.Events:Fire("PACK_CHANGED")
+        cursorTo(0.5, 0.5)
+    """)
+    rev = "ns:CurrentBoard().rev"
+    check(not ev("mark()"), "a pack with nothing unpublished has no mark on its name")
+    before = ev(rev)
+    lua.execute("wheel(1)")
+    check((ev("framing()"), ev("showing()")) == ("0.50 0.50 x1.20", "0.50 0.50 x1.20") and ev(rev) != before,
+          f"a wheel notch is saved as the slide's framing, and is an edit to the board ({ev('framing()')})")
+    check(ev("mark()"), "which puts the unpublished mark on the pack's name straight away")
+    lua.execute("wheel(1) wheel(1)")
+    before = ev(rev)
+    lua.execute("pan(60, 0)")
+    check(ev("framing() == showing() and ns:CurrentBoard().slides[1].view.cx < 0.5") and ev(rev) != before,
+          f"so is a right-drag, once it is let go ({ev('framing()')})")
+    before, saved = ev(rev), ev("framing()")
+    lua.execute("pan(0, 0)")
+    check(ev(rev) == before, "a right-click that goes nowhere is not an edit")
+    lua.execute("canvas:SetSize(300, 400)")
+    check((ev(rev), ev("framing()")) == (before, saved), "nor is resizing the map")
+    lua.execute("canvas:SetSize(600, 400)")
+
+    lua.execute("""
+        local pack = ns:CurrentPack()
+        second = ns.Pack:AddBoard(pack)
+        other = pack.boards[second].slides[1]
+        other.mapKey = "blank"
+        other.view.cx, other.view.cy, other.view.zoom = 0.30, 0.60, 3
+        ns.SelectBoard(second)
+    """)
+    check((ev("framing(other)"), ev("showing()")) == ("0.30 0.60 x3.00", "0.30 0.60 x3.00"),
+          f"a board opens framed the way it was saved, not the way the last one was left ({ev('framing(other)')})")
+    lua.execute("ns.SelectBoard(1)")
+    check((ev("framing()"), ev("showing()")) == (saved, saved), "and going back finds the first board's framing where it was")
+
+    lua.execute("""
+        incoming = ns.Serialize:UnpackFromExport(ns.Serialize:PackForExport(ns:CurrentPack()))
+        incoming.revision = (incoming.revision or 1) + 1
+        incoming.modified = nil
+        local v = incoming.boards[1].slides[1].view
+        v.cx, v.cy, v.zoom = 0.25, 0.25, 4
+        sentRev = incoming.boards[1].rev
+        ns.Comm:ApplyPack(incoming, "Lead", true)
+    """)
+    check((ev("framing()"), ev("showing()")) == ("0.25 0.25 x4.00", "0.25 0.25 x4.00"),
+          f"a received publish shows the framing its sender saved ({ev('framing()')})")
+    check(ev(rev) == ev("sentRev") and not ev("mark()"), "and loading it is not an edit of the receiver's own")
+
     check(ev("SLASH_RAIDMAP1 == '/raidmap' and SLASH_RAIDMAP2 == '/rm' and SlashCmdList.RAIDMAP ~= nil"),
           "/raidmap and /rm are the slash commands")
     errors = [line for line in ev("printed").values() if "failed" in str(line).lower()]
@@ -476,7 +584,7 @@ def test_client(label, flavor_setup):
 
 
 if __name__ == "__main__":
-    test_client("Anniversary", test_compat.ANNIVERSARY)
-    test_client("WoW Forever", test_compat.FOREVER)
+    test_client("Anniversary", test_compat.ANNIVERSARY, "Aeva-Starlove")
+    test_client("WoW Forever", FOREVER, "Aeva Starlove")
     print(f"\n{len(failures)} failure(s)")
     sys.exit(1 if failures else 0)

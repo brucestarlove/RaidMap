@@ -15,8 +15,10 @@ local WINDOW_BACKDROP = {
 
 local RAID_ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 
--- Height of the row of captions over the dropdowns. Everything under the title
--- bar sits this much lower to make room for it.
+-- Height of a row of captions. There are two: over the dropdowns, where
+-- everything under the title bar sits this much lower to make room, and over
+-- the token toggles and the slide strip, where the roster and the map stop
+-- this much higher.
 local CAPTION_ROW = 14
 
 local frame
@@ -279,20 +281,15 @@ local function CreateWindow()
 	-- inset lines the caption up with the box, which starts that far inside
 	-- the dropdown's frame.
 	frame.captions = {}
-	for _, pair in ipairs({ { packDD, "Packs" }, { boardDD, "Boards" }, { dropdown, "Maps" } }) do
+	local function AddCaption(anchor, text, x, y)
 		local caption = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-		caption:SetPoint("BOTTOMLEFT", pair[1], "TOPLEFT", 20, 0)
-		caption:SetText(pair[2])
+		caption:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", x, y)
+		caption:SetText(text)
 		frame.captions[#frame.captions + 1] = caption
 	end
-
-	local resetZoom = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-	resetZoom:SetSize(90, 20)
-	resetZoom:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -34 - CAPTION_ROW)
-	resetZoom:SetText("Reset view")
-	resetZoom:SetScript("OnClick", function()
-		frame.canvas:SetView(0.5, 0.5, 1)
-	end)
+	for _, pair in ipairs({ { packDD, "Packs" }, { boardDD, "Boards" }, { dropdown, "Maps" } }) do
+		AddCaption(pair[1], pair[2], 20, 0)
+	end
 
 	-- Row 2: tools
 	local toolbar = CreateFrame("Frame", nil, frame)
@@ -394,21 +391,24 @@ local function CreateWindow()
 	frame.demoToggle = demoToggle
 
 	-- The toggles take the row the slide strip occupies under the canvas, so
-	-- the list stops short of it.
+	-- the list stops short of it, and of the captions over that row.
 	local TOGGLE_WIDTH = (ns.RosterPanel.WIDTH - 4) / 2
 
 	local roster = ns.CreateRosterPanel(frame)
 	roster:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -106 - CAPTION_ROW)
-	roster:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 56)
+	roster:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 56 + CAPTION_ROW)
 	frame.roster = roster
 
 	local displayToggle = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 	displayToggle:SetSize(TOGGLE_WIDTH, 22)
-	displayToggle:SetPoint("TOPLEFT", roster, "BOTTOMLEFT", 0, -4)
+	displayToggle:SetPoint("TOPLEFT", roster, "BOTTOMLEFT", 0, -4 - CAPTION_ROW)
 
 	local layoutToggle = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 	layoutToggle:SetSize(TOGGLE_WIDTH, 22)
 	layoutToggle:SetPoint("LEFT", displayToggle, "RIGHT", 4, 0)
+
+	-- One caption for the pair: each button only names its own setting.
+	AddCaption(displayToggle, "Display Names & Icons", 2, 2)
 
 	local function RefreshTokenToggles()
 		local board = ns:CurrentBoard()
@@ -463,7 +463,7 @@ local function CreateWindow()
 	-- Canvas
 	local canvas = ns.CreateMapCanvas(frame)
 	canvas:SetPoint("TOPLEFT", roster, "TOPRIGHT", 6, 20)
-	canvas:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -10, 58)
+	canvas:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -10, 58 + CAPTION_ROW)
 	frame.canvas = canvas
 	ns.MainCanvas = canvas
 
@@ -472,9 +472,11 @@ local function CreateWindow()
 	-- Slide strip, anchored to the canvas so it tracks the notes panel opening
 	-- and closing rather than running underneath it.
 	local filmstrip = ns.CreateFilmstrip(frame)
-	filmstrip:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -6)
+	filmstrip:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -6 - CAPTION_ROW)
 	filmstrip:SetPoint("RIGHT", canvas, "RIGHT", 0, 0)
 	frame.filmstrip = filmstrip
+
+	AddCaption(filmstrip, "Slides", 2, 2)
 
 	-- Notes
 	local notes = ns.CreateNotesPanel(frame)
@@ -489,24 +491,24 @@ local function CreateWindow()
 		canvas:ClearAllPoints()
 		canvas:SetPoint("TOPLEFT", roster, "TOPRIGHT", 6, 20)
 		canvas:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",
-			-10 - (showNotes and (ns.NotesPanel.WIDTH + 8) or 0), 58)
+			-10 - (showNotes and (ns.NotesPanel.WIDTH + 8) or 0), 58 + CAPTION_ROW)
 		canvas:Layout()
 	end
 	frame.UpdateLayout = UpdateLayout
 
 	local notesToggle = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-	notesToggle:SetSize(70, 20)
-	notesToggle:SetPoint("RIGHT", resetZoom, "LEFT", -4, 0)
-	notesToggle:SetText("Notes")
+	notesToggle:SetSize(110, 20)
+	notesToggle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, -34 - CAPTION_ROW)
+	notesToggle:SetText("Display Notes")
 	notesToggle:SetScript("OnClick", function()
 		ns.db.profile.showNotes = not ns.db.profile.showNotes
 		UpdateLayout()
 	end)
 
 	local present = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-	present:SetSize(70, 20)
+	present:SetSize(110, 20)
 	present:SetPoint("RIGHT", notesToggle, "LEFT", -4, 0)
-	present:SetText("Present")
+	present:SetText("Present Mode")
 	present:SetScript("OnClick", function() ns.TogglePresentation() end)
 	present:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -528,9 +530,6 @@ local function CreateWindow()
 			ns.Comm:PublishFocus(index)
 		end
 
-		-- Load the art while the OLD slide is still current, so the view-save
-		-- handler writes the old view back where it belongs instead of
-		-- stamping stale framing onto the slide we are moving to.
 		SelectMap(slide.mapKey, true)
 		board.currentSlide = index
 		canvas:SetView(slide.view.cx, slide.view.cy, slide.view.zoom)
@@ -562,11 +561,17 @@ local function CreateWindow()
 		ns.SwitchSlide(board.currentSlide or 1, true)
 	end)
 
-	-- Persist the view so a slide reopens framed the way it was left.
-	ns.Events:On("CANVAS_VIEW_CHANGED", function(changed)
-		if changed ~= canvas then return end
+	-- Persist the view so a slide reopens framed the way it was left. Only the
+	-- user's own pan or zoom is saved: the canvas also lays out while a slide,
+	-- board or pack is loading, when what it shows is not yet the current
+	-- slide's, and saving then stamps one slide's framing onto another. And
+	-- framing is part of the slide, so it is an edit like any other, or a
+	-- publish would leave it behind.
+	ns.Events:On("CANVAS_VIEW_MOVED", function(moved)
+		if moved ~= canvas then return end
 		local slide = CurrentSlide()
 		slide.view.cx, slide.view.cy, slide.view.zoom = canvas:GetView()
+		ns.Model:Touch()
 	end)
 
 	-- Live coordinate readout. A development aid: it makes it obvious at a

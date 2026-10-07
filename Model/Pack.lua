@@ -16,45 +16,85 @@ naming one "BT guild" would collide. Title and author are display metadata.
 local Pack = {}
 ns.Pack = Pack
 
-local function authorName()
-	local name = UnitName("player") or "?"
-	local realm = GetRealmName() or "?"
-	return name .. "-" .. realm
-end
-
-Pack.AuthorName = authorName
-
 --[[
-The address another client whispers to reach this character. AuthorName keeps
-the display realm instead, because uids and author fields already saved were
-minted with it.
+Who this character is.
 
-On TBC Anniversary, and on any other version this comes to support, that is
-Name-Realm, the realm without its spaces. That form has to keep working.
+On TBC Anniversary, and on any other version this comes to support, a character
+is a name on a realm. That form has to keep working.
 
 WoW Forever is the exception, and is detected by asking the client rather than
 by flavor, so nothing else is ever sent down its path. It has no realm in a
 character's identity. A name there is a first name and a surname, unique across
 the region, and the name functions hand back the surname in the slot where
-other clients hand back a realm. Name-Realm reaches nobody. Blizzard's own chat
-box takes "First-Surname" or "First Surname" as a whisper target
-(ChatFrameEditBox.lua, ExtractTellTarget); the hyphen form is used here because
-it has no space to lose inside a chat link.
+other clients hand back a realm. GetRealmName still answers there, with a realm
+that is part of nobody's name.
 ]]
-function Pack.WhisperName()
+local function hasSurnames()
+	return RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled()
+end
+
+-- Name-Realm, the realm as it is displayed.
+local function realmName()
+	local name = UnitName("player") or "?"
+	local realm = GetRealmName() or "?"
+	return name .. "-" .. realm
+end
+
+-- What a pack records as its author, and what its lock compares against:
+-- "First Surname" on WoW Forever, Name-Realm everywhere else.
+local function authorName()
+	if not hasSurnames() then return realmName() end
+
 	local name, surname = (UnitNameUnmodified or UnitName)("player")
 	name = name or "?"
+	return (surname and surname ~= "") and (name .. " " .. surname) or name
+end
 
-	if RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() then
-		local full = (surname and surname ~= "") and (name .. "-" .. surname) or name
-		return (full:gsub(" ", "-"))
-	end
+Pack.AuthorName = authorName
 
+--[[
+The address another client whispers to reach this character: Name-Realm with
+the realm's spaces taken out, or on WoW Forever the full name, where Name-Realm
+reaches nobody. Blizzard's own chat box there takes "First-Surname" or
+"First Surname" as a whisper target (ChatFrameEditBox.lua, ExtractTellTarget);
+the hyphen form is used because it has no space to lose inside a chat link.
+]]
+function Pack.WhisperName()
+	if hasSurnames() then return (authorName():gsub(" ", "-")) end
+
+	local name = (UnitNameUnmodified or UnitName)("player") or "?"
 	local realm = GetNormalizedRealmName and GetNormalizedRealmName()
 	if not realm or realm == "" then
 		realm = (GetRealmName() or "?"):gsub("[%s%-]", "")
 	end
 	return name .. "-" .. realm
+end
+
+--[[
+An author as shown to someone. WoW Forever recorded authors as Name-Realm
+before it recorded them by surname, and a pack from then, or from a client
+still running that version, says so. The realm is dropped from those: it is not
+part of the name, and the surname cannot be known from here.
+]]
+function Pack.DisplayName(author)
+	if not author or author == "" then return "?" end
+
+	if hasSurnames() then
+		local realm = "-" .. (GetRealmName() or "")
+		if #realm > 1 and #author > #realm and author:sub(-#realm) == realm then
+			return author:sub(1, -#realm - 1)
+		end
+	end
+	return author
+end
+
+-- A pack this character made on WoW Forever under the Name-Realm author. Left
+-- that way, its own author could neither lock it nor publish over the lock.
+local function claim(pack)
+	local old, new = realmName(), authorName()
+	if old == new then return end
+	if pack.author == old then pack.author = new end
+	if pack.lastPublishedBy == old then pack.lastPublishedBy = new end
 end
 
 local function newUID()
@@ -100,6 +140,7 @@ end
 
 function Pack:Add(pack)
 	local profile = ns.db.profile
+	claim(pack)
 	profile.packs[pack.uid] = pack
 	-- Only append if it is genuinely new; re-adding an updated pack must not
 	-- duplicate its entry in the ordering.
@@ -279,6 +320,9 @@ function Pack:RestoreRevision(pack, index)
 	-- would be ignored as stale by everyone already holding the bad version.
 	restored.uid = pack.uid
 	restored.history = pack.history
+	-- Who made the pack is not something a revision can change, and an old
+	-- snapshot may spell it the old way.
+	restored.author = pack.author
 	restored.revision = (pack.revision or 1) + 1
 	restored.lastPublishedBy = self.AuthorName()
 	restored.locked = pack.locked
@@ -328,4 +372,6 @@ function Pack:Migrate()
 	if not profile.packs[profile.currentPack] then
 		profile.currentPack = profile.packOrder[1]
 	end
+
+	for _, pack in pairs(profile.packs) do claim(pack) end
 end

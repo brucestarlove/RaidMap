@@ -154,11 +154,11 @@ local function DoImport(text)
 	ns.Pack:Select(incoming.uid)
 
 	ns:Print("Imported \"%s\" by %s -- %d boards.",
-		incoming.title or "pack", incoming.author or "?", #incoming.boards)
+		incoming.title or "pack", ns.Pack.DisplayName(incoming.author), #incoming.boards)
 
 	if incoming.author ~= ns.Pack.AuthorName() then
 		ns:Print("It stays linked to %s, so their updates will reach you. Use Fork as mine to break that.",
-			incoming.author or "the author")
+			incoming.author and ns.Pack.DisplayName(incoming.author) or "the author")
 	end
 end
 

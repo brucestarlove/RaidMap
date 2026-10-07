@@ -452,6 +452,9 @@ def test_strings_and_links(realm):
     f = w.join("Fen")
     a.do('ns.Pack:Rename(ns:CurrentPack(), "Kara Week 1"); addMarker(1, 0.25, 0.75); ns.Pack:AddBoard(ns:CurrentPack())')
     uid = a.get("ns:CurrentPack().uid")
+    author = a.get("ns:CurrentPack().author")
+    check(author == f"Aly-{realm}" and f.get(f'ns.Pack.DisplayName("{author}")') == author,
+          f"where a character is a name on a realm, a pack's author is shown with the realm: {author}")
 
     a.do("ns.ShowExport()")
     text = a.get("RaidMapExportFrame.edit:GetText()")
@@ -495,6 +498,14 @@ def test_surnames(sep):
     a.do('ns.Pack:Rename(ns:CurrentPack(), "Kara Week 1"); addMarker(1, 0.25, 0.75); ns.Pack:AddBoard(ns:CurrentPack())')
     uid = a.get("ns:CurrentPack().uid")
 
+    author = a.get("ns:CurrentPack().author")
+    check(author == "Lavitz Starlove", f"a pack's author is the first name and surname, with no realm: {author}")
+    # Packs saved before authors were recorded that way say Name-Realm.
+    a.do('ns:CurrentPack().author = "Lavitz-Classic Beta PvP 2"; ns.Pack:Migrate()')
+    check(a.get("ns:CurrentPack().author") == "Lavitz Starlove", "one this character made under Name-Realm is put right at login")
+    shown = [g.get(f'ns.Pack.DisplayName("{name}")') for name in ("Lavitz-Classic Beta PvP 2", "Lavitz Starlove")]
+    check(shown == ["Lavitz", "Lavitz Starlove"], f"somebody else's is shown without the realm, and a full name as it is: {shown}")
+
     a.do("ns.LinkPackInChat()")
     line = a.get("typed")
     check(line == "[RaidMap: Kara Week 1 from Lavitz-Starlove]", f"the link names the author by surname, not realm: {line}")
@@ -529,10 +540,33 @@ def test_surnames(sep):
     check(g.get("followed") == 1 and a.get("followed") is None,
           "the leader's slide change moves the raid, and its echo is recognised as their own")
 
+    n.group(assist=True)
+    a.do("ns:CurrentPack().locked = true; ns.Comm:PublishPack()")
+    w.run()
+    rev = a.get("ns:CurrentPack().revision")
+    n.do(f'ns.Pack:Select("{uid}"); addMarker(1, 0.5, 0.5); ns.Comm:PublishPack()')
+    w.run()
+    check(n.said("is locked by Lavitz Starlove") and a.get("ns:CurrentPack().revision") == rev,
+          "an assistant who shares the author's first name cannot publish over the author's lock")
+
+
+def test_slides():
+    print("\nNew slides")
+    w = World()
+    a = w.join("Aly")
+    a.do('board = ns:CurrentBoard(); board.slides[1].mapKey = "hyjal"; second = ns.Model:AddSlide(board)')
+    check(a.get("board.slides[second].mapKey") == "hyjal" and a.get("#board.slides[second].elements") == 0,
+          "a new slide starts empty, on the map of the slide in view")
+    a.do('board.slides[second].mapKey = "karazhan"; board.currentSlide = second; third = ns.Model:AddSlide(board)')
+    check(a.get("board.slides[third].mapKey") == "karazhan", "whichever slide that is, not always the first")
+    a.do("ns.Pack:AddBoard(ns:CurrentPack())")
+    check(a.get("ns:CurrentPack().boards[2].slides[1].mapKey") == "blank", "a new board still starts on the default map")
+
 
 if __name__ == "__main__":
     test_raid()
     test_duplicate()
+    test_slides()
     test_party()
     test_strings_and_links("Dreamscythe")
     test_strings_and_links("Classic Beta PvP 2")

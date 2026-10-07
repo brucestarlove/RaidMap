@@ -44,7 +44,7 @@ installed build, diffed against `classic_anniversary`:
 | Chat | `ChatFrame_AddMessageEventFilter`, `ChatEdit_*` exist only as shims in `Blizzard_DeprecatedChatInfo`, loaded only while the `loadDeprecationFallbacks` CVar is on. Real names: `ChatFrameUtil.AddMessageEventFilter/GetActiveWindow/ChooseBoxForSend/ActivateChat` | `UI/Transfer.lua` |
 | **Secret values** | Midnight's restriction system is live. Chat text is secret during chat lockdown; `UnitClass`, `UnitIsGroupAssistant`, … are `SecretWhenUnitIdentityRestricted`. Secrets throw when compared, indexed with, or passed to string functions. `ns.AnySecret` guards them | `Init.lua`, `Roster.lua`, `Transfer.lua` |
 | Dropdowns | `LibUIDropDownMenu` picks its code path by interface number: 16001 < 20000 → "ClassicEra" on a retail UI. **Local patch** decides by `WOW_PROJECT_ID` first. Re-apply if the lib is ever updated. Fallback if menus misbehave: Blizzard's `MenuUtil` (`Blizzard_Menu` ships in both clients) | `Libs/LibUIDropDownMenu/LibUIDropDownMenu.lua:31` |
-| **Names** | A character is a **first name and a surname**, unique across the region, with no realm in its identity (`RegionalUniqueNamesEnabled()`; the WTF folder is `Lavitz-Starlove`). `UnitName` and `UnitNameUnmodified` return the surname where other clients return a realm (`Blizzard_FrameXMLUtil/Camelot/NameUtil.lua`). `GetRealmName` still answers, but `Name-Realm` is nobody's address: a chat link built that way was never answered (2026-10-06, first two-player test). The chat box accepts `First-Surname` and `First Surname` as whisper targets (`ChatFrameEditBox.lua`, `ExtractTellTarget`). **Only Forever.** TBC Anniversary, and any other version supported later, still needs `Name-Realm`, so the surname form is used only when `RegionalUniqueNamesEnabled()` exists and says yes, never by flavor; `test_sync.py` runs both kinds of world. So `Pack.WhisperName` gives `First-Surname` there, replies go to the sender exactly as the client reported it, and "is this me" compares full names, since two raiders can share a first name. **From the UI source; the working link is not yet confirmed in game.** Still realm-based: `Pack.AuthorName` (pack author, lock check), and specs are keyed by short name | `Model/Pack.lua`, `Core/Comm.lua` |
+| **Names** | A character is a **first name and a surname**, unique across the region, with no realm in its identity (`RegionalUniqueNamesEnabled()`; the WTF folder is `Lavitz-Starlove`). `UnitName` and `UnitNameUnmodified` return the surname where other clients return a realm (`Blizzard_FrameXMLUtil/Camelot/NameUtil.lua`). `GetRealmName` still answers, but `Name-Realm` is nobody's address: a chat link built that way was never answered (2026-10-06, first two-player test). The chat box accepts `First-Surname` and `First Surname` as whisper targets (`ChatFrameEditBox.lua`, `ExtractTellTarget`). **Only Forever.** TBC Anniversary, and any other version supported later, still needs `Name-Realm`, so the surname form is used only when `RegionalUniqueNamesEnabled()` exists and says yes, never by flavor; `test_sync.py` runs both kinds of world. So `Pack.WhisperName` gives `First-Surname` there, replies go to the sender exactly as the client reported it, and "is this me" compares full names, since two raiders can share a first name. **From the UI source; the working link is not yet confirmed in game.** `Pack.AuthorName` is `First Surname` there as well (2026-10-07), so the pack list reads right and the lock tells namesakes apart; a pack this character made under `Name-Realm` is rewritten at login, and `Pack.DisplayName` drops the realm from anyone else's. Still by short name: specs | `Model/Pack.lua`, `Core/Comm.lua` |
 | Addon comms | `C_ChatInfo.InChatMessagingLockdown()`, `Enum.AddOnRestrictionType` {Combat, Encounter, ChallengeMode, PvPMatch, Map, Chat}, event `ADDON_RESTRICTION_STATE_CHANGED`. Sends return `AddOnMessageLockdown`. See Phase 4 | deferred |
 
 ### Verified APIs (all confirmed present in this client)
@@ -369,11 +369,12 @@ Remaining in Phase 1:
       narrow to fit, then page between `<` `>` (or the wheel) without
       changing slide, and `+` / Copy / Delete never leave the row
 - [x] Per-slide map, framing and elements; switching restores all three
+- [x] `+` opens the new slide on the map of the slide in view, not the default
 - [x] Copy-slide-forward — the fast path for authoring movement
 - [x] Notes panel, two scopes (per-slide and per-board), collapsible
 - [ ] Slide reordering (drag tabs)
 - [x] Presentation mode: compact read-only overlay for raiders, next/prev
-      (`UI/Presentation.lua`, `/rm present` or the Present button)
+      (`UI/Presentation.lua`, `/rm present` or the Present Mode button)
 
 **Presentation mode is a second *view*, never a second copy of the state.** Its
 next/prev call the same `ns.SwitchSlide` the editor does, so one path serves
@@ -388,7 +389,7 @@ Read-only is structural, not a matter of leaving the buttons out:
   dragged or right-click deleted — and right-drag panning works over the top of
   them instead of being swallowed;
 - pan/zoom is local, because MainFrame writes `slide.view` for *its own* canvas
-  only (`if changed ~= canvas then return end`). Framing a room mid-pull cannot
+  only (`if moved ~= canvas then return end`). Framing a room mid-pull cannot
   dirty the pack or bump a revision;
 - notes render as a FontString, not an edit box. **An edit box that takes focus
   eats the movement keys** — a bad thing to hand somebody during a fight. Same
@@ -411,10 +412,18 @@ Note edits deliberately stay out of the undo stack — undo is for spatial edits
 and threading keystrokes through it would bury a token move under fifty
 one-character entries.
 
-Gotcha already hit: `SwitchSlide` must load the new map *before* reassigning
-`currentSlide`, or the view-save handler stamps the outgoing slide's framing
-onto the incoming one. Undo/redo fires `SLIDES_CHANGED` as well as
+**A slide's framing is saved from the user's own pan or zoom and from nothing
+else** (`CANVAS_VIEW_MOVED`: a wheel notch, or letting go of a right-drag). It
+used to be saved on every `CANVAS_VIEW_CHANGED`, which every layout fires,
+including the ones that happen while a slide, board or pack is loading; so
+switching board, or receiving a publish, stamped the editor's last view onto
+the slide being opened. Saving it is also an edit (`Model:Touch`), or a publish
+left the framing behind. Undo/redo fires `SLIDES_CHANGED` as well as
 `ELEMENTS_CHANGED` so the view resyncs when an undone slide vanishes.
+
+`Model:Touch` fires `PACK_MODIFIED` on the first edit since a publish, which is
+what puts the `~` on the pack's name without waiting for something else to
+redraw the dropdown.
 
 ### Phase 4 — Sync
 

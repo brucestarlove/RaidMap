@@ -119,7 +119,7 @@ local function BuildPackMenu(self, level, menuList)
 			local info = LibDD:UIDropDownMenu_CreateInfo()
 			local ago = math.max(0, time() - (entry.at or 0))
 			info.text = ("rev %d -- %s, %s ago")
-				:format(entry.rev or 0, entry.by or "?", SecondsToTime(ago) or "?")
+				:format(entry.rev or 0, ns.Pack.DisplayName(entry.by), SecondsToTime(ago) or "?")
 			info.notCheckable = true
 			info.func = function()
 				ns.Pack:RestoreRevision(ns:CurrentPack(), i)
@@ -139,7 +139,7 @@ local function BuildPackMenu(self, level, menuList)
 	for _, pack in ipairs(ns.Pack:List()) do
 		info = LibDD:UIDropDownMenu_CreateInfo()
 		info.text = ("%s |cff888888(%s, rev %d)|r")
-			:format(pack.title, pack.author or "?", pack.revision or 0)
+			:format(pack.title, ns.Pack.DisplayName(pack.author), pack.revision or 0)
 		info.checked = (pack.uid == (current and current.uid))
 		info.func = function()
 			ns.Pack:Select(pack.uid)
@@ -179,7 +179,7 @@ local function BuildPackMenu(self, level, menuList)
 				if copy then
 					ns.Pack:Select(copy.uid)
 					ns:Print("Forked \"%s\". Updates from %s will no longer reach it.",
-						copy.title, current.author or "?")
+						copy.title, ns.Pack.DisplayName(current.author))
 				end
 			end,
 		}
@@ -332,6 +332,8 @@ function ns.CreateLibraryDropdowns(parent)
 	end
 
 	ns.Events:On("PACK_CHANGED", Refresh)
+	-- The first edit since a publish, which is when the ~ has to appear.
+	ns.Events:On("PACK_MODIFIED", Refresh)
 
 	return packDD, boardDD, Refresh
 end
