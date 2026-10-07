@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="RaidMap logo: a folded map with a boss skull and three role tokens around it">
+  <defs>
+    <radialGradient id="map-bg" cx="256" cy="230" r="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2b4058"/>
+      <stop offset="0.55" stop-color="#16232f"/>
+      <stop offset="1" stop-color="#0a1118"/>
+    </radialGradient>
+    <linearGradient id="map-light" x1="0" y1="112" x2="0" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f5e6b8"/>
+      <stop offset="1" stop-color="#dcc083"/>
+    </linearGradient>
+    <linearGradient id="map-shade" x1="0" y1="112" x2="0" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcc188"/>
+      <stop offset="1" stop-color="#bf9c5c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#map-bg)"/>
+
+  <g transform="translate(256 260) scale(1.12) translate(-256 -266)">
+    <!-- folded map: three panels -->
+    <path d="M64 148 L192 112 L320 148 L448 112 L448 384 L320 420 L192 384 L64 420 Z" fill="#000000" opacity="0.4" transform="translate(0 16)"/>
+    <path d="M64 148 L192 112 L192 384 L64 420 Z" fill="url(#map-light)"/>
+    <path d="M192 112 L320 148 L320 420 L192 384 Z" fill="url(#map-shade)"/>
+    <path d="M320 148 L448 112 L448 384 L320 420 Z" fill="url(#map-light)"/>
+
+    <!-- the room, and the boss in it -->
+    <circle cx="256" cy="250" r="100" fill="#fff4d0" opacity="0.4"/>
+    <circle cx="256" cy="250" r="100" fill="none" stroke="#6b4423" stroke-width="5" opacity="0.7"/>
+    <path d="M192 112 V384 M320 148 V420" fill="none" stroke="#8f6b35" stroke-width="3" opacity="0.6"/>
+    <path d="M64 148 L192 112 L320 148 L448 112 L448 384 L320 420 L192 384 L64 420 Z" fill="none" stroke="#4a2f14" stroke-width="7" stroke-linejoin="round"/>
+
+    <g transform="translate(256 252) scale(0.6)">
+      <path d="M0 -74 C40 -74 66 -48 66 -12 C66 8 58 22 46 30 L44 36 C44 40 42 42 40 44 L40 54 C40 60 36 64 30 64 L-30 64 C-36 64 -40 60 -40 54 L-40 44 C-42 42 -44 40 -44 36 L-46 30 C-58 22 -66 8 -66 -12 C-66 -48 -40 -74 0 -74 Z" fill="#38210f"/>
+      <ellipse cx="-27" cy="-10" rx="18" ry="21" fill="#ecd8a4"/>
+      <ellipse cx="27" cy="-10" rx="18" ry="21" fill="#ecd8a4"/>
+      <path d="M0 14 L10 33 Q0 27 -10 33 Z" fill="#ecd8a4"/>
+      <path d="M-18 44 V64 M0 44 V64 M18 44 V64" fill="none" stroke="#ecd8a4" stroke-width="8"/>
+    </g>
+
+    <!-- a planned move: the damage dealer runs to the X -->
+    <path d="M366 226 Q408 272 396 322" fill="none" stroke="#a02a1e" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 15"/>
+    <path d="M382 334 L408 360 M408 334 L382 360" fill="none" stroke="#a02a1e" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- healer -->
+    <g transform="translate(169.4 200)">
+      <circle r="33" fill="#24150a"/>
+      <circle r="27" fill="#2f9e4f"/>
+      <path d="M-5 -16 H5 V-5 H16 V5 H5 V16 H-5 V5 H-16 V-5 H-5 Z" fill="#ffffff"/>
+    </g>
+    <!-- damage -->
+    <g transform="translate(342.6 200)">
+      <circle r="33" fill="#24150a"/>
+      <circle r="27" fill="#cf3a2d"/>
+      <g transform="rotate(45)" fill="#ffffff">
+        <path d="M-3.5 4 V-13 L0 -20 L3.5 -13 V4 Z"/>
+        <rect x="-10" y="4" width="20" height="5" rx="1.5"/>
+        <rect x="-2.5" y="9" width="5" height="8"/>
+        <circle cx="0" cy="18.5" r="3.5"/>
+      </g>
+    </g>
+    <!-- tank -->
+    <g transform="translate(256 350)">
+      <circle r="33" fill="#24150a"/>
+      <circle r="27" fill="#2f72d6"/>
+      <path d="M0 -16 L14 -11 V2 C14 10 8 15 0 18 C-8 15 -14 10 -14 2 V-11 Z" fill="#ffffff"/>
+    </g>
+  </g>
+</svg>

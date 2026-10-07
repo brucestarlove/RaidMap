@@ -36,6 +36,8 @@ Type `/rm` (or `/raidmap`) to open the editor.
 - **Pack > Board > Slide.** A pack is what you share ("BT guild"), a board is
   one boss, a slide is one phase. The three dropdowns across the top pick the
   pack, the board and the map; the strip under the map holds the slides.
+  When there are more slides than fit, the arrows at either end of the strip
+  (or the mouse wheel over it) scroll through the tabs.
 - **Tokens.** Click a raid marker or a role icon in the toolbar to add it at
   the centre of the view, or drag it onto the map. Drag names out of the raid
   list on the left the same way. Role tokens number themselves (T1, T2, H1...)

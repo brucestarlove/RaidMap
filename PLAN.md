@@ -365,6 +365,9 @@ Remaining in Phase 1:
 
 ### Phase 3 — Slides, notes, presentation
 - [x] Slide strip with add / duplicate / delete / rename (right-click a tab)
+- [x] The strip stays inside its row however many slides there are: tabs
+      narrow to fit, then page between `<` `>` (or the wheel) without
+      changing slide, and `+` / Copy / Delete never leave the row
 - [x] Per-slide map, framing and elements; switching restores all three
 - [x] Copy-slide-forward — the fast path for authoring movement
 - [x] Notes panel, two scopes (per-slide and per-board), collapsible

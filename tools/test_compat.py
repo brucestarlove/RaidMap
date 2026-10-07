@@ -226,8 +226,10 @@ ns.Model = { RenameSlide = function(_, b, index, name) b.slides[index].name = na
 -- A StaticPopup as the client hands it to a dialog's callbacks. "GameDialog"
 -- is the frame both clients ship (Blizzard_StaticPopup_Game/GameDialog.xml:
 -- parentKey="EditBox", GameDialogMixin:GetEditBox); it has no .editBox.
-function popup(shape)
-    local dialog = { Hide = function(self) self.hidden = true end }
+-- data is StaticPopup_Show's fourth argument, which it keeps at dialog.data
+-- and passes to OnShow and OnAccept after the dialog.
+function popup(shape, data)
+    local dialog = { data = data, Hide = function(self) self.hidden = true end }
     local box = { text = "" }
     function box:SetText(t) self.text = t end
     function box:GetText() return self.text end
@@ -243,39 +245,41 @@ function popup(shape)
     return dialog, box
 end
 """
+# Name, what the box is prefilled with, where the new text lands, and the data
+# the dialog is shown with.
 DIALOGS = (
-    ("RAIDMAP_RENAME_BOARD", "Illidan", "board.name"),
-    ("RAIDMAP_RENAME_PACK", "BT guild", "pack.title"),
-    ("RAIDMAP_RENAME_SLIDE", "P1", "board.slides[1].name"),
-    ("RAIDMAP_NEW_PACK", "", "added.title"),
+    ("RAIDMAP_RENAME_BOARD", "Illidan", "board.name", "nil"),
+    ("RAIDMAP_RENAME_PACK", "BT guild", "pack.title", "nil"),
+    ("RAIDMAP_RENAME_SLIDE", "P1", "board.slides[1].name", "board.slides[1]"),
+    ("RAIDMAP_NEW_PACK", "", "added.title", "nil"),
 )
 
 
 def test_dialogs():
     print("\nRename dialogs (UI/Library.lua, UI/Filmstrip.lua)")
     for label, shape in (("both clients (GameDialog)", "GameDialog"), ("pre-GameDialog UI", "legacy")):
-        for name, initial, result in DIALOGS:
+        for name, initial, result, data in DIALOGS:
             lua = runtime(FOREVER + DIALOG_STUBS, ["Core/Init.lua", "UI/Library.lua", "UI/Filmstrip.lua"])
             lua.execute(DIALOG_WORLD)
             ok, err = run(lua, f"""
                 info = StaticPopupDialogs.{name}
-                dialog, box = popup("{shape}")
-                info.OnShow(dialog)
+                dialog, box = popup("{shape}", {data})
+                info.OnShow(dialog, dialog.data)
                 shown, focused = box.text, box.focused
                 box:SetText("Via button")
-                info.OnAccept(dialog)
+                info.OnAccept(dialog, dialog.data)
             """)
             check(ok and lua.eval("shown") == initial and lua.eval("focused") and lua.eval(result) == "Via button",
                   f"{label}: {name} prefills '{initial}', Accept applies the text {err or ''}")
-            ok, err = run(lua, """
-                dialog, box = popup("%s")
-                info.OnShow(dialog)
+            ok, err = run(lua, f"""
+                dialog, box = popup("{shape}", {data})
+                info.OnShow(dialog, dialog.data)
                 box:SetText("Via enter")
                 info.EditBoxOnEnterPressed(box)
                 entered = dialog.hidden
-                dialog, box = popup("%s")
+                dialog, box = popup("{shape}", {data})
                 info.EditBoxOnEscapePressed(box)
-            """ % (shape, shape))
+            """)
             check(ok and lua.eval(result) == "Via enter" and lua.eval("entered and dialog.hidden"),
                   f"{label}: {name} Enter applies and closes, Escape closes {err or ''}")
 

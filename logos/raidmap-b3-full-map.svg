@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="RaidMap logo: a parchment map filling the tile, with a boss skull in a cave room and three role tokens around it">
+  <defs>
+    <linearGradient id="full-paper" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f4e4b4"/>
+      <stop offset="1" stop-color="#dfc588"/>
+    </linearGradient>
+    <radialGradient id="full-age" cx="256" cy="256" r="362" gradientUnits="userSpaceOnUse">
+      <stop offset="0.55" stop-color="#7a4f1e" stop-opacity="0"/>
+      <stop offset="1" stop-color="#7a4f1e" stop-opacity="0.6"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#full-paper)"/>
+
+  <!-- the lair: a tunnel in from the west, opening into the boss room -->
+  <path d="M26 392 C76 392 84 330 140 312" fill="none" stroke="#8a6a3c" stroke-width="58"/>
+  <circle cx="256" cy="262" r="138" fill="#8a6a3c"/>
+  <path d="M26 392 C76 392 84 330 140 312" fill="none" stroke="#f8ecc6" stroke-width="46"/>
+  <circle cx="256" cy="262" r="132" fill="#f8ecc6"/>
+
+  <!-- fold creases, and the shaded middle panel -->
+  <rect x="171" y="0" width="170" height="512" fill="#6b4a1e" opacity="0.13"/>
+  <path d="M171 0 V512 M341 0 V512" fill="none" stroke="#6b4a1e" stroke-width="3" opacity="0.45"/>
+  <path d="M174 0 V512 M344 0 V512" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+  <path d="M0 256 H512" fill="none" stroke="#6b4a1e" stroke-width="3" opacity="0.28"/>
+  <path d="M0 259 H512" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+
+  <rect width="512" height="512" fill="url(#full-age)"/>
+  <rect x="26" y="26" width="460" height="460" rx="14" fill="none" stroke="#4a2f14" stroke-width="7"/>
+
+  <!-- compass -->
+  <g transform="translate(430 94)">
+    <circle r="19" fill="none" stroke="#4a2f14" stroke-width="3"/>
+    <path d="M0 -32 L6 -6 L32 0 L6 6 L0 32 L-6 6 L-32 0 L-6 -6 Z" fill="#4a2f14"/>
+  </g>
+
+  <!-- the boss -->
+  <g transform="translate(256 266) scale(0.8)">
+    <path d="M0 -74 C40 -74 66 -48 66 -12 C66 8 58 22 46 30 L44 36 C44 40 42 42 40 44 L40 54 C40 60 36 64 30 64 L-30 64 C-36 64 -40 60 -40 54 L-40 44 C-42 42 -44 40 -44 36 L-46 30 C-58 22 -66 8 -66 -12 C-66 -48 -40 -74 0 -74 Z" fill="#38210f"/>
+    <ellipse cx="-27" cy="-10" rx="18" ry="21" fill="#f3e2b0"/>
+    <ellipse cx="27" cy="-10" rx="18" ry="21" fill="#f3e2b0"/>
+    <path d="M0 14 L10 33 Q0 27 -10 33 Z" fill="#f3e2b0"/>
+    <path d="M-18 44 V64 M0 44 V64 M18 44 V64" fill="none" stroke="#f3e2b0" stroke-width="8"/>
+  </g>
+
+  <!-- a planned move: the damage dealer runs to the X -->
+  <path d="M404 234 Q456 296 438 354" fill="none" stroke="#a02a1e" stroke-width="8" stroke-linecap="round" stroke-dasharray="5 19"/>
+  <path d="M418 378 L450 410 M450 378 L418 410" fill="none" stroke="#a02a1e" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- healer -->
+  <g transform="translate(140 195)">
+    <circle r="44" fill="#24150a"/>
+    <circle r="36" fill="#2f9e4f"/>
+    <path transform="scale(1.33)" d="M-5 -16 H5 V-5 H16 V5 H5 V16 H-5 V5 H-16 V-5 H-5 Z" fill="#ffffff"/>
+  </g>
+  <!-- damage -->
+  <g transform="translate(372 195)">
+    <circle r="44" fill="#24150a"/>
+    <circle r="36" fill="#cf3a2d"/>
+    <g transform="rotate(45) scale(1.33)" fill="#ffffff">
+      <path d="M-3.5 4 V-13 L0 -20 L3.5 -13 V4 Z"/>
+      <rect x="-10" y="4" width="20" height="5" rx="1.5"/>
+      <rect x="-2.5" y="9" width="5" height="8"/>
+      <circle cx="0" cy="18.5" r="3.5"/>
+    </g>
+  </g>
+  <!-- tank -->
+  <g transform="translate(256 396)">
+    <circle r="44" fill="#24150a"/>
+    <circle r="36" fill="#2f72d6"/>
+    <path transform="scale(1.33)" d="M0 -16 L14 -11 V2 C14 10 8 15 0 18 C-8 15 -14 10 -14 2 V-11 Z" fill="#ffffff"/>
+  </g>
+</svg>

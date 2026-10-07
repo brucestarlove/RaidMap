@@ -82,6 +82,10 @@ function M:IsEnabled() return self._enabled end
 
 function M:SetText(t) self._text = t end
 function M:GetText() return self._text or "" end
+function M:GetFontString()
+    self._fontString = self._fontString or new("FontString", nil, self)
+    return self._fontString
+end
 function M:GetFont() return "font", 10 end
 function M:GetStringWidth() return 40 end
 function M:SetChecked(c) self._checked = c and true or false end
@@ -113,7 +117,18 @@ end
 UIParent = new("Frame")
 GameTooltip = new("GameTooltip")
 StaticPopupDialogs = {}
-function StaticPopup_Show() end
+-- Enough of a dialog to drive a popup's own callbacks: like the game's, it
+-- holds the data it was shown with and an edit box, and runs OnShow.
+function StaticPopup_Show(which, _, _, data)
+    local dialog = new("Frame")
+    dialog.which, dialog.data = which, data
+    dialog.EditBox = new("EditBox", nil, dialog)
+    function dialog:GetEditBox() return self.EditBox end
+    popup = dialog
+    local info = StaticPopupDialogs[which]
+    if info.OnShow then info.OnShow(dialog, data) end
+    return dialog
+end
 function GetCursorPosition() return cursorX or 0, cursorY or 0 end
 function GetTexCoordsForRole(role) return 0, 0.25, 0, 0.25 end
 RAID_TARGET_1, RAID_TARGET_8 = "Star", "Skull"
@@ -172,6 +187,38 @@ function dragGhost()
     end
 end
 function click(button) button.scripts.OnClick(button, "LeftButton") end
+
+-- The slide strip: which slides have a tab showing, how wide those tabs are,
+-- and where the row ends, which is the right edge of Delete.
+strip = window.filmstrip
+function tabsShown()
+    local out, width = {}
+    for _, tab in ipairs(strip.tabs) do
+        if tab:IsShown() then
+            out[#out + 1] = tab.index
+            width = tab:GetWidth()
+        end
+    end
+    return table.concat(out, " "), width
+end
+function tabFor(index)
+    for _, tab in ipairs(strip.tabs) do
+        if tab:IsShown() and tab.index == index then return tab end
+    end
+end
+function stripEnd()
+    return strip.addButton._points[1][4] + strip.addButton:GetWidth()
+        + 3 + strip.copyButton:GetWidth() + 3 + strip.deleteButton:GetWidth()
+end
+function slideCount(n)
+    local board = ns:CurrentBoard()
+    while #board.slides < n do click(strip.addButton) end
+    while #board.slides > n do click(strip.deleteButton) end
+end
+function arrows()
+    return (strip.prevButton:IsShown() and (strip.prevButton:IsEnabled() and "<" or "(<)") or "")
+        .. (strip.nextButton:IsShown() and (strip.nextButton:IsEnabled() and ">" or "(>)") or "")
+end
 
 function rowsShown()
     local n, first, lastText = 0
@@ -355,6 +402,72 @@ def test_client(label, flavor_setup):
     check(show.GetText(show) == "Show: Icon" and not stack.IsEnabled(stack), "Show: Icon greys out Stack")
     lua.execute("click(window.displayToggle) click(window.displayToggle)")
     check(show.GetText(show) == "Show: Both" and stack.IsEnabled(stack), "back round to Both, Stack live again")
+
+    print("  -- slide strip")
+    current = "ns:CurrentBoard().currentSlide"
+    lua.execute("slideCount(3)")
+    shown, width = ev("tabsShown()")
+    check((shown, width, ev("arrows()")) == ("1 2 3", 104, "") and ev("strip.addButton._points[1][4]") == 321,
+          "before the strip is measured, tabs are full width with + straight after the last")
+    lua.execute("strip:SetWidth(630)")
+    shown, width = ev("tabsShown()")
+    check((shown, width, ev("arrows()")) == ("1 2 3", 104, ""), "three slides in a 630px strip look the same")
+    lua.execute("slideCount(7)")
+    shown, width = ev("tabsShown()")
+    check((shown, ev("arrows()")) == ("1 2 3 4 5 6 7", "") and 64 <= width < 104 and ev("stripEnd()") <= 630,
+          f"seven all show, narrowed to fit with Delete inside the strip ({width}px tabs, row ends at {ev('stripEnd()')})")
+    check(ev("tabFor(7):GetFontString():GetWidth()") < width, "a tab's label is held narrower than the tab")
+    check(ev("tabFor(7):GetText()") == "|cffffffff7. Slide 7|r" and ev("tabFor(6):GetText()") == "6. Slide 6",
+          "only the current slide's tab is marked")
+
+    lua.execute("slideCount(12)")
+    shown, width = ev("tabsShown()")
+    check((shown, ev("arrows()")) == ("7 8 9 10 11 12", "<(>)") and width >= 64 and ev("stripEnd()") <= 630,
+          f"twelve do not fit: a run ending at the new slide shows between arrows ({shown}; row ends at {ev('stripEnd()')})")
+    lua.execute("strip.scripts.OnMouseWheel(strip, 1)")
+    check((ev("tabsShown()")[0], ev(current)) == ("6 7 8 9 10 11", 12),
+          "a wheel notch up moves the run one tab and leaves the board on slide 12")
+    lua.execute("click(strip.prevButton)")
+    check((ev("tabsShown()")[0], ev("arrows()"), ev(current)) == ("1 2 3 4 5 6", "(<)>", 12),
+          "the left arrow pages back to the start, where it greys out")
+    lua.execute("click(tabFor(2))")
+    check((ev("tabsShown()")[0], ev(current)) == ("1 2 3 4 5 6", 2), "clicking a tab in the scrolled run switches to that slide")
+    lua.execute("click(strip.nextButton) ns.SwitchSlide(9, true)")
+    check(ev("tabsShown()")[0] == "7 8 9 10 11 12", "a slide change arriving for a tab already showing does not move the run")
+    lua.execute("ns.SwitchSlide(3, true)")
+    check(ev("tabsShown()")[0] == "3 4 5 6 7 8", "one for a tab out of sight scrolls just far enough to show it")
+    lua.execute("ns.SwitchSlide(12, true) strip:SetWidth(412)")
+    shown, width = ev("tabsShown()")
+    check(shown == "10 11 12" and ev("stripEnd()") <= 412,
+          f"a narrower strip (notes opened) keeps the current slide in the shorter run ({shown})")
+    lua.execute("strip:SetWidth(630) slideCount(3)")
+    shown, width = ev("tabsShown()")
+    check((shown, width, ev("arrows()")) == ("1 2 3", 104, ""), "deleting back down to three restores full-width tabs and drops the arrows")
+    lua.execute("ns.History:Undo()")
+    check(ev("tabsShown()")[0] == "1 2 3 4" and ev("#strip.tabs") <= 7, "undoing a delete brings its tab back")
+
+    names = """(function()
+        local out = {}
+        for i, slide in ipairs(ns:CurrentBoard().slides) do out[i] = slide.name end
+        return table.concat(out, ", ")
+    end)()"""
+    first = ev("ns:CurrentBoard().slides[1].name")
+    lua.execute("ns.SwitchSlide(1, true) before = #elements()")
+    lua.execute("tabFor(3).scripts.OnClick(tabFor(3), 'RightButton')")
+    check((ev("popup.which"), ev("popup.EditBox:GetText()"), ev(current)) == ("RAIDMAP_RENAME_SLIDE", "Slide 3", 1),
+          "right-clicking another slide's tab offers that slide's name and leaves the board on slide 1")
+    lua.execute("advance(0.1) click(palette[1])")
+    check(ev("#ns:CurrentBoard().slides[1].elements == before + 1 and #ns:CurrentBoard().slides[3].elements == 0"),
+          "with the rename abandoned, the next token lands on the slide in view")
+    lua.execute("popup.EditBox:SetText('P2 stack') StaticPopupDialogs[popup.which].OnAccept(popup, popup.data)")
+    check((ev(names), ev(current), ev("tabFor(3):GetText()")) == (f"{first}, Slide 2, P2 stack, Slide 4", 1, "3. P2 stack"),
+          f"accepting renames the tab that was right-clicked, still on slide 1 ({ev(names)})")
+    lua.execute("tabFor(3).scripts.OnClick(tabFor(3), 'RightButton') ns.Model:RemoveSlide(ns:CurrentBoard(), 2)")
+    lua.execute("popup.EditBox:SetText('P3') StaticPopupDialogs[popup.which].EditBoxOnEnterPressed(popup.EditBox)")
+    check(ev(names) == f"{first}, P3, Slide 4", f"Enter renames the same slide even after it has moved up a place ({ev(names)})")
+    lua.execute("tabFor(2).scripts.OnClick(tabFor(2), 'RightButton') ns.Model:RemoveSlide(ns:CurrentBoard(), 2)")
+    lua.execute("popup.EditBox:SetText('gone') StaticPopupDialogs[popup.which].OnAccept(popup, popup.data)")
+    check(ev(names) == f"{first}, Slide 4", "and a slide deleted while its popup was open renames nothing")
 
     check(ev("SLASH_RAIDMAP1 == '/raidmap' and SLASH_RAIDMAP2 == '/rm' and SlashCmdList.RAIDMAP ~= nil"),
           "/raidmap and /rm are the slash commands")
