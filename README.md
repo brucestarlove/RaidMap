@@ -7,9 +7,13 @@ raiders' names on the game's own maps, split a fight into slides, write notes be
 
 Works on **WoW Forever** (1.60.x) and **TBC Anniversary** (2.5.x) and from the same download.
 
+Now [live on CurseForge!](https://www.curseforge.com/wow/addons/raidmap)
+
+Also submitting to Wago.io to host strings for packs.
+
 > Still testing heavily. Please [submit bugs here!](https://github.com/brucestarlove/RaidMap/issues)
 
-![screenshot](./RaidMap.webp)
+Quickie video I'll re-make later: [![Introducing: RaidMap](https://img.youtube.com/vi/MhBSdLJ5KoQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=MhBSdLJ5KoQ)
 
 ## Install (.zip)
 
