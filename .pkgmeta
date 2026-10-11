@@ -3,9 +3,11 @@
 # already leaves out anything whose name starts with a dot.
 package-as: RaidMap
 
-# Development material that never ships.
+# Development material and page artwork that never ship.
 ignore:
   - tools
   - PLAN.md
   - PACKS.md
   - README.md
+  - RaidMap.webp
+  - logos
