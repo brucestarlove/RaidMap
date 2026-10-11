@@ -5,6 +5,8 @@
     "alts: tried in order; the addon uses the first whose art exists in the running client.",
     "flavors: which clients list it in the map menu (vanilla, tbc, forever). Any client can still open it from a shared pack.",
     "floorNames: overrides for floors retail data cannot name (keys are floor numbers, '0' = page).",
+    "minimap: floors shown from a map's own minimap tiles, for instances with no drawn map (keys are floor numbers; each replaces that floor of the folder's art). cols and rows pick the tiles world/minimaps/<map>/map<col>_<row>; origin and content are the window onto that block to show, in pixels.",
+    "images: floors shown from an image the addon ships as Art\\<file>.tga (keys as for minimap). tools/stitch.py makes them and prints their size and content.",
     "verified: clients where someone has eyeballed the art and confirmed it is the right layout.",
     "note: shown in the report only."
   ],
@@ -119,8 +121,11 @@
      "alts": [{"folder": "magistersterrace"}]},
 
     {"key": "dalaran", "name": "City of Dalaran", "kind": "dungeon", "era": "forever", "flavors": ["forever"],
-     "alts": [{"folder": "dalarancity"}],
-     "note": "GUESS: Wrath-era Dalaran City + The Underbelly (sewers). Forever's dungeon enters through the sewers."},
+     "alts": [{"folder": "dalarancity",
+               "minimap": {"1": {"map": 2959, "name": "Dalaran City", "cols": [30, 31, 32], "rows": [30, 31, 32], "tile": 512, "origin": [131, 473], "content": [1104, 690]}},
+               "images": {"2": {"name": "The Underbelly", "file": "DalaranUnderbelly", "size": 1024, "content": [797, 563]},
+                          "3": {"name": "Below the Underbelly", "file": "DalaranUnderbellyLower", "size": 1024, "content": [534, 813]}}}],
+     "note": "No drawn map ships for this dungeon (map 2959). Floor 1 is its minimap; floors 2 and 3 are stitched from the interior minimap of its city model. The folder's Wrath-era art is not used."},
     {"key": "ruinsoflordaeron", "name": "Ruins of Lordaeron", "kind": "dungeon", "era": "forever", "flavors": ["forever"],
      "alts": [{"folder": "ruinsoflordaeronscenario"}],
      "note": "GUESS: the Battle for Azeroth scenario art of the same place."},

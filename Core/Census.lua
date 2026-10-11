@@ -56,8 +56,15 @@ local function ScanFloors(lines)
 		for altIndex, alt in ipairs(inst.alts) do
 			for _, f in ipairs(alt.floors) do
 				local n = f[1]
-				local base = n == 0 and alt.path or (alt.path .. n .. "_")
-				local id = FileID(base .. "1")
+				local id
+				if f.files then
+					-- Nothing to probe: a file ID is taken on trust, and art
+					-- the addon ships has none, so it counts as 1.
+					id = tonumber(f.files[1]) or 1
+				else
+					local base = n == 0 and alt.path or (alt.path .. n .. "_")
+					id = FileID(base .. "1")
+				end
 				lines[#lines + 1] = ("F|%s|%d|%d|%d"):format(inst.key, altIndex, n, id)
 				if id ~= 0 then present = present + 1 end
 			end

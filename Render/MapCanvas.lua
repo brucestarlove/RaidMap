@@ -117,24 +117,26 @@ function CanvasMixin:LayoutTiles()
 			local index = (row - 1) * d.cols + col
 			local tile = self:AcquireTile(index)
 
-			local x0 = (col - 1) * d.tileW
-			local y0 = (row - 1) * d.tileH
+			local x0 = (col - 1) * d.tileW - (d.offsetX or 0)
+			local y0 = (row - 1) * d.tileH - (d.offsetY or 0)
 
-			-- Trailing tiles are partly padding; crop them so the map ends at
-			-- its real edge instead of a band of transparent pixels.
-			local w = math.min(d.tileW, d.contentW - x0)
-			local h = math.min(d.tileH, d.contentH - y0)
+			-- The map is a window onto the tiles. Trailing tiles are partly
+			-- padding, and a map can start partway into the leading ones;
+			-- crop each to the part inside, so the map ends at its real edges.
+			local left, top = math.max(0, -x0), math.max(0, -y0)
+			local w = math.min(d.tileW, d.contentW - x0) - left
+			local h = math.min(d.tileH, d.contentH - y0) - top
 
 			if w <= 0 or h <= 0 then
 				tile:Hide()
 			else
 				tile:SetTexture(d.textures[index])
-				tile:SetTexCoord(0, w / d.tileW, 0, h / d.tileH)
+				tile:SetTexCoord(left / d.tileW, (left + w) / d.tileW, top / d.tileH, (top + h) / d.tileH)
 				tile:SetSize(w * self.scale, h * self.scale)
 				tile:ClearAllPoints()
 				tile:SetPoint("TOPLEFT", self, "TOPLEFT",
-					self.originX + x0 * self.scale,
-					-(self.originY + y0 * self.scale))
+					self.originX + (x0 + left) * self.scale,
+					-(self.originY + (y0 + top) * self.scale))
 				tile:Show()
 			end
 		end

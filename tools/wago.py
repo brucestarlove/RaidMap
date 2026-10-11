@@ -79,4 +79,10 @@ def listfile(prefix, build):
     mapdata.loadable_art."""
     name = f"listfile/{build}/" + prefix.strip("/").replace("/", "_") + ".json"
     raw = _cached(name, f"{BASE}/api/files?search={prefix}&version={build}")
-    return {int(k): v for k, v in json.loads(raw).items()}
+    # No matches comes back as an empty list, not an empty object.
+    return {int(k): v for k, v in (json.loads(raw) or {}).items()}
+
+
+def file(fdid, build):
+    """The bytes of one file as this build ships it."""
+    return _cached(f"casc/{build}/{fdid}", f"{BASE}/api/casc/{fdid}?download&version={build}")

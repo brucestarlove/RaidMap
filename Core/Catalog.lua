@@ -8,6 +8,7 @@ Art references are polymorphic. Every map -- Blizzard's or ours -- resolves to
 the same descriptor, so the renderer has exactly one implementation:
 
 	{ kind = "tiles",  base = "Interface\\WorldMap\\karazhan\\karazhan3_" }
+	{ kind = "tiles",  files = { 6982326, 6982322, ... }, cols = 3, ... }
 	{ kind = "uimap",  id = 1948 }
 	{ kind = "blank" }
 
@@ -18,6 +19,8 @@ Three sources feed the catalog:
   * Instance interiors are NOT bound to any uiMapID in the classic clients, but
     their art ships on disk as Interface\WorldMap\<folder>\<stem><floor>_<tile>.
     Data/Instances.lua lists them; it is generated weekly by tools/mapdata.py.
+    An instance with no drawn map is shown from its minimap tiles, which an
+    addon can only name by file ID, or from an image in Art\.
   * Blank canvas, plus the keys boards were saved with before instance data.
 ]]
 
@@ -72,13 +75,14 @@ local function HasArt(base)
 	return hasArt[base]
 end
 
-local function TileArt(base, dims)
+local function TileArt(base, dims, files)
 	if not dims then return { kind = "tiles", base = base } end
 	return {
-		kind = "tiles", base = base,
+		kind = "tiles", base = base, files = files,
 		cols = dims[1], rows = dims[2],
 		tileW = dims[3], tileH = dims[4],
 		contentW = dims[5], contentH = dims[6],
+		offsetX = dims[7], offsetY = dims[8],
 	}
 end
 
@@ -105,8 +109,16 @@ function Catalog:GetInstances()
 			for _, f in ipairs(alt.floors) do
 				local n = f[1]
 				local base = n == 0 and alt.path or (alt.path .. n .. "_")
-				if HasArt(base) then
-					found[#found + 1] = { n = n, name = f[2], art = TileArt(base, f.dims) }
+				-- A file ID cannot be probed the way a path can, so a floor
+				-- listed by file ID is trusted on the instance's own clients.
+				local present
+				if f.files then
+					present = inst.flavors[ns.FLAVOR]
+				else
+					present = HasArt(base)
+				end
+				if present then
+					found[#found + 1] = { n = n, name = f[2], art = TileArt(base, f.dims, f.files) }
 				end
 			end
 
@@ -279,7 +291,9 @@ end
 Resolve an art ref into a flat descriptor the renderer consumes:
 
 	{ textures = { <path or fileID>, ... },  -- row-major, nil for blank
-	  cols, rows, tileW, tileH, contentW, contentH }
+	  cols, rows, tileW, tileH, contentW, contentH,
+	  offsetX, offsetY }                        -- where in the tiles the map
+	                                            -- starts; nil for the corner
 ]]
 function Catalog:Resolve(art)
 	if not art then return nil end
@@ -296,9 +310,12 @@ function Catalog:Resolve(art)
 	if art.kind == "tiles" then
 		local cols = art.cols or CLASSIC.cols
 		local rows = art.rows or CLASSIC.rows
-		local textures = {}
-		for i = 1, cols * rows do
-			textures[i] = art.base .. i
+		local textures = art.files
+		if not textures then
+			textures = {}
+			for i = 1, cols * rows do
+				textures[i] = art.base .. i
+			end
 		end
 		return {
 			textures = textures,
@@ -307,6 +324,7 @@ function Catalog:Resolve(art)
 			tileH = art.tileH or CLASSIC.tileH,
 			contentW = art.contentW or CLASSIC.contentW,
 			contentH = art.contentH or CLASSIC.contentH,
+			offsetX = art.offsetX, offsetY = art.offsetY,
 		}
 	end
 

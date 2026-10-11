@@ -151,6 +151,16 @@ def test_forever():
 
     d = C.Resolve(C, C.Find(C, "uimap:1411").art)
     check(d is not None and d.cols == 4 and d.rows == 3 and len(lua_list(d.textures)) == 12, "Durotar resolves to 4x3 tiles")
+    city = C.Find(C, "inst:dalaran:1")
+    d = city and C.Resolve(C, city.art)
+    ids = lua_list(d.textures) if d else []
+    check(d is not None and (d.cols, d.rows) == (3, 3) and len(ids) == 9 and all(isinstance(i, int) for i in ids)
+          and (d.offsetX, d.offsetY) == (131, 473),
+          f"Dalaran's city floor is a window onto a 3x3 block of its minimap tiles, by file ID ({ids[:2]}...)")
+    under = C.Find(C, "inst:dalaran:2")
+    d = under and C.Resolve(C, under.art)
+    check(d is not None and lua_list(d.textures) == ["Interface\\AddOns\\RaidMap\\Art\\DalaranUnderbelly"]
+          and (d.contentW, d.contentH) == (797, 563), "Dalaran's Underbelly is the image the addon ships")
     check(C.Find(C, "blacktemple") is not None, "legacy key 'blacktemple' resolves")
     check(C.DefaultKey(C) == "blank", "new slides default to the blank canvas on Forever")
 
@@ -190,6 +200,7 @@ def test_anniversary():
     check(scholo is not None and "scholomanceold" not in scholo.art.base, "Scholomance falls back to the art Anniversary ships")
     hs = C.Find(C, "inst:hyjalsummit:0")
     check(hs is not None and "cotmounthyjal" in hs.art.base, "Hyjal Summit uses the Caverns of Time raid art")
+    check(C.Find(C, "inst:dalaran:1") is None, "Dalaran's minimap floor is not offered on a client without the dungeon")
 
     for legacy, expect in (("blacktemple", "blacktemple\\blacktemple"), ("sunwell", "sunwellplateau"),
                            ("zulaman", "zulaman"), ("zulgurub", "zulgurub"), ("ruinsofaq", "ruinsofahnqiraj")):

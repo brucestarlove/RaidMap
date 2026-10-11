@@ -158,11 +158,35 @@ def floors_of(files, stem):
     return out
 
 
-def resolve_curated(curated, art, retail, present, shipped_art):
+def minimap_floor(n, spec, builds):
+    """A floor shown from a block of a map's minimap tiles. They are not
+    interface files, so the addon reaches them by file ID, not by path."""
+    folder = f"world/minimaps/{spec['map']}/"
+    files, where = [], []
+    for product, build in builds.items():
+        ids = {path: fdid for fdid, path in wago.listfile(folder, build).items()}
+        got = [ids.get(f"{folder}map{c}_{r}.blp") for r in spec["rows"] for c in spec["cols"]]
+        if all(got):
+            files = got
+            where.append(product)
+    return {"n": n, "where": where, "known": True, "tiles": len(files), "name": spec["name"], "files": files,
+            "dims": (len(spec["cols"]), len(spec["rows"]), spec["tile"], spec["tile"], *spec["content"], *spec["origin"])}
+
+
+def image_floor(n, spec, builds):
+    """A floor shown from one image in the addon's own Art folder."""
+    shipped = os.path.exists(os.path.join(ROOT, "Art", spec["file"] + ".tga"))
+    return {"n": n, "where": list(builds) if shipped else [], "known": True, "tiles": 1, "name": spec["name"],
+            "files": ["Interface\\AddOns\\RaidMap\\Art\\" + spec["file"]],
+            "dims": (1, 1, spec["size"], spec["size"], *spec["content"])}
+
+
+def resolve_curated(curated, art, retail, present, shipped_art, builds):
     """Attach the floors that at least one checked client can load to every alt.
     present: {product: set of fileDataIDs its client can load by path}.
     shipped_art: index of everything that ships, loadable or not, to tell a
     wrong name from art no client can reach.
+    builds: {product: build}, for floors taken from minimap tiles.
     Returns (problems, notes) for the report."""
     problems, notes = [], []
     for inst in curated:
@@ -208,6 +232,14 @@ def resolve_curated(curated, art, retail, present, shipped_art):
                                     "(not used by retail; name them in floorNames to keep)")
                 out = [f for f in out if f["known"] or str(f["n"]) in named]
 
+            own = [minimap_floor(int(n), spec, builds) for n, spec in alt.get("minimap", {}).items()]
+            own += [image_floor(int(n), spec, builds) for n, spec in alt.get("images", {}).items()]
+            for floor in own:
+                if floor["where"]:
+                    out = sorted([f for f in out if f["n"] != floor["n"]] + [floor], key=lambda f: f["n"])
+                else:
+                    problems.append(f"`{inst['key']}` floor {floor['n']}: its minimap tiles or image are missing")
+
             for f in out:
                 for p in f["where"]:
                     inst["_present"][p].add((ai, f["n"]))
@@ -234,7 +266,10 @@ def write_lua(curated, sources):
         "-- Each alt is a candidate art set; Catalog uses the first whose art exists in",
         "-- the running client. Floor 0 is a single page (<path><tile>), floors 1+ are",
         "-- <path><floor>_<tile>. dims = cols, rows, tileW, tileH, contentW, contentH",
-        "-- when they differ from the classic 4, 3, 256, 256, 1002, 668.",
+        "-- when they differ from the classic 4, 3, 256, 256, 1002, 668. A floor with",
+        "-- files = { ... } is drawn from those instead, row by row: the file IDs of",
+        "-- minimap tiles, or art the addon ships. Its dims can end with the x, y in",
+        "-- that block where the map starts.",
         "",
         "local ADDON, ns = ...",
         "",
@@ -264,6 +299,9 @@ def write_lua(curated, sources):
                 parts = [str(f["n"]), lua_str(name)]
                 if f["dims"] and tuple(f["dims"]) != DEFAULT_DIMS:
                     parts.append("dims = { " + ", ".join(str(d) for d in f["dims"]) + " }")
+                if f.get("files"):
+                    parts.append("files = { " + ", ".join(lua_str(i) if isinstance(i, str) else str(i)
+                                                          for i in f["files"]) + " }")
                 lines.append("\t\t\t\t{ " + ", ".join(parts) + " },")
             lines.append("\t\t\t} },")
         lines.append("\t\t},")
@@ -362,7 +400,7 @@ def main():
 
     with open(CURATED) as f:
         curated = json.load(f)["instances"]
-    problems, notes = resolve_curated(curated, art, retail, present, shipped_art)
+    problems, notes = resolve_curated(curated, art, retail, present, shipped_art, builds)
 
     sources = {**builds, "names": f"wow {retail_build}"}
     write_lua(curated, sources)

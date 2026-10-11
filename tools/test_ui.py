@@ -321,6 +321,17 @@ def test_client(label, flavor_setup, author):
         ns.SwitchSlide(1, true)
     """)
     check(ev("canvas.drawW") is not None, "canvas lays out the blank map")
+    lua.execute("""
+        canvas:SetArt({ kind = "tiles", files = { 11, 12, 21, 22 }, cols = 2, rows = 2, tileW = 512, tileH = 512,
+                        contentW = 600, contentH = 400, offsetX = 100, offsetY = 300 })
+        function shown(i)
+            local c = canvas.tiles[i]._coords
+            return ("%d-%d %d-%d"):format(c[1] * 512, c[2] * 512, c[3] * 512, c[4] * 512)
+        end
+    """)
+    check((ev("shown(1)"), ev("shown(4)")) == ("100-512 300-512", "0-188 0-188"),
+          f"a map that starts partway into its tiles shows only the part of each inside it ({ev('shown(1)')}, {ev('shown(4)')})")
+    lua.execute("ns.SwitchSlide(1, true)")
     check(ev("#palette") == 11, f"toolbar has 8 marker and 3 role buttons that click and drag ({ev('#palette')})")
     captions = ev("""(function()
         local out = {}

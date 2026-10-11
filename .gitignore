@@ -1,4 +1,5 @@
 tools/cache/
+tools/scratch/
 __pycache__/
 .release/
 .env
