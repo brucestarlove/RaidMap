@@ -472,6 +472,7 @@ def test_strings_and_links(realm):
 
     a.do("ns.ShowExport()")
     text = a.get("RaidMapExportFrame.edit:GetText()")
+    check(text.startswith("!RM:1!"), f"an export string opens with the RaidMap prefix: {text[:12]}...")
     f.do("ns.ShowImport()")
     f.lua.globals().RaidMapImportFrame.edit.SetText(f.lua.globals().RaidMapImportFrame.edit, text)
     f.do('click("Import")')

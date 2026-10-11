@@ -15,6 +15,7 @@ because retrofitting it means breaking every saved board.
 Two encodings off the same compressed bytes:
 	addon channel -- for sync, avoids bytes the chat system mangles
 	print         -- for export strings a human pastes into Discord
+	                 (UI/Transfer.lua puts the "!RM:1!" prefix on those)
 ]]
 
 local Serialize = {}

@@ -13,6 +13,9 @@ handle.
 
 local LINK_PREFIX = "garrmission:raidmap"
 
+-- Marks a pasted string as RaidMap's, to people and to the sites that host them.
+local EXPORT_PREFIX = "!RM:1!"
+
 local function stripHistory(pack, fn)
 	-- Snapshots would multiply the string size for no benefit to the recipient.
 	local saved = pack.history
@@ -101,7 +104,7 @@ function ns.ShowExport(pack)
 		exportFrame = CreateTextFrame("RaidMapExportFrame", "Export pack", false)
 	end
 
-	local text = stripHistory(pack, function()
+	local text = EXPORT_PREFIX .. stripHistory(pack, function()
 		return ns.Serialize:PackForExport(pack, "pack")
 	end)
 
@@ -119,17 +122,13 @@ local function DoImport(text)
 	text = (text or ""):gsub("%s+", "")
 	if text == "" then return end
 
-	local incoming, err, payload = ns.Serialize:UnpackFromExport(text)
+	local incoming, err
+	if text:sub(1, #EXPORT_PREFIX) == EXPORT_PREFIX then
+		incoming, err = ns.Serialize:UnpackFromExport(text:sub(#EXPORT_PREFIX + 1))
+	end
 	if not incoming then
 		ns:Print("|cffff5555Import failed: %s|r", err or "unreadable string")
 		return
-	end
-
-	-- A bare board from an older export still deserves a home.
-	if payload and payload.kind == "board" then
-		local wrapper = ns.Pack:New(incoming.name or "Imported board")
-		wrapper.boards = { incoming }
-		incoming = wrapper
 	end
 
 	if type(incoming.boards) ~= "table" or #incoming.boards == 0 then
