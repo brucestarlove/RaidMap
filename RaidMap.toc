@@ -1,10 +1,19 @@
 ## Interface: 20506, 16001
 ## Title: RaidMap
-## Notes: Raid strategy board - maps, tokens, slides, notes.
+## Notes: Raid strategy board - maps, tokens, slides, notes. Type /rm or /raidmap to open it.
 ## Author: Lavitz Starlove
-## Version: @project-version@
+## IconTexture: Interface\AddOns\RaidMap\Art\Icon
 ## SavedVariables: RaidMapDB
 ## X-Curse-Project-ID: 1731366
+
+#@debug@
+# Loaded straight from the repository, the version is "dev". The packager
+# deletes this block and uncomments the next, so a release carries its tag.
+## Version: dev
+#@end-debug@
+#@non-debug@
+# ## Version: @project-version@
+#@end-non-debug@
 
 Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
@@ -27,6 +36,7 @@ Render\MapCanvas.lua
 Render\Tokens.lua
 UI\Library.lua
 UI\Transfer.lua
+UI\BugReport.lua
 UI\PlaceDrag.lua
 UI\Draw.lua
 UI\RosterPanel.lua

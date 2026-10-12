@@ -33,6 +33,7 @@ STUBS = r"""
 now = 0
 function GetTime() return now end
 function time() return 1791000000 + math.floor(now) end
+date = os.date
 function GetBuildInfo() return "2.5.6", "69795", "", 20506 end
 printed = {}
 function print(...) printed[#printed + 1] = tostring((...)) end

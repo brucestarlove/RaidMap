@@ -39,6 +39,7 @@ function CreateFrame()
     return f
 end
 time = os.time
+date = os.date
 hooks = {}
 function hooksecurefunc(name, fn) hooks[name] = fn end
 printed = {}
@@ -205,6 +206,31 @@ def test_transfer():
               f"{label}: clicking the link asks the author for the pack {err or ''}")
 
 
+def test_bug_report():
+    print("\nBug report (UI/BugReport.lua)")
+    for label, setup in (("Forever", FOREVER + MODERN_CHAT), ("Anniversary", ANNIVERSARY + OLD_CHAT)):
+        lua = runtime(setup + TRANSFER_STUBS, ["Core/Init.lua", "UI/Transfer.lua", "UI/BugReport.lua"])
+        lua.execute("function has(text) return report:find(text, 1, true) ~= nil end")
+        ok, err = run(lua, 'report = ns.BuildBugReport("it broke")')
+        check(ok and lua.eval("has('version: dev\\nclient: ') and has(', ' .. ns.FLAVOR .. '\\n')")
+              and lua.eval("has('pack: (could not read: ')")
+              and lua.eval("has('--- what went wrong ---\\nit broke\\n')"),
+              f"{label}: with nothing loaded but the addon's core, there is still a report {err or ''}")
+
+        lua.execute("""
+            function GetRealZoneText() return SECRET end
+            function IsInInstance() return false, "none" end
+            ns.Pack = { AuthorName = function() return SECRET end }
+            function UnitClass() return "Priest", "PRIEST" end
+            function UnitLevel() return 70 end
+            function GetLocale() return "enUS" end
+        """)
+        ok, err = run(lua, 'report = ns.BuildBugReport("")')
+        check(ok and lua.eval("has('zone: (could not read: ') and has('character: (could not read: ')")
+              and lua.eval("has('locale: enUS\\n')"),
+              f"{label}: a secret zone or name costs that line and no other {err or ''}")
+
+
 DIALOG_STUBS = """
 StaticPopupDialogs = {}
 function LibStub() return {} end
@@ -288,6 +314,7 @@ if __name__ == "__main__":
     test_init()
     test_roster()
     test_transfer()
+    test_bug_report()
     test_dialogs()
     print(f"\n{len(failures)} failure(s)")
     sys.exit(1 if failures else 0)

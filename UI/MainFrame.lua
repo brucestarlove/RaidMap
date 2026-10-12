@@ -279,6 +279,23 @@ local function CreateWindow()
 	close:SetPoint("RIGHT", 2, 0)
 	close:SetScript("OnClick", function() frame:Hide() end)
 
+	-- Up here because it is about the addon rather than the board, and stays
+	-- in reach whatever state the rest of the window is in.
+	local bug = CreateFrame("Button", nil, titleBar, "UIPanelButtonTemplate")
+	bug:SetSize(100, 20)
+	bug:SetPoint("RIGHT", close, "LEFT", -2, 0)
+	bug:SetText("Report a bug")
+	bug:SetScript("OnClick", function() ns.ShowBugReport() end)
+	bug:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:AddLine("Report a bug")
+		GameTooltip:AddLine("Writes up what the addon knows, with a note from", 0.6, 0.6, 0.6)
+		GameTooltip:AddLine("you, to copy and email. Also /rm bug.", 0.6, 0.6, 0.6)
+		GameTooltip:Show()
+	end)
+	bug:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	frame.bugButton = bug
+
 	-- Row 1: pack -> board -> map, narrowing scope left to right.
 	local packDD, boardDD, refreshLibrary = ns.CreateLibraryDropdowns(frame)
 	packDD:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", -8, -2 - CAPTION_ROW)

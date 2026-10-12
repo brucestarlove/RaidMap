@@ -138,6 +138,12 @@ function StaticPopup_Show(which, _, _, data)
     return dialog
 end
 function GetCursorPosition() return cursorX or 0, cursorY or 0 end
+function GetLocale() return "enUS" end
+function GetPhysicalScreenSize() return 2560, 1440 end
+function UnitLevel() return 70 end
+function GetRealZoneText() return "Black Temple" end
+function IsInInstance() return true, "raid" end
+function GetNumGroupMembers() return 25 end
 function GetTexCoordsForRole(role) return 0, 0.25, 0, 0.25 end
 RAID_TARGET_1, RAID_TARGET_8 = "Star", "Skull"
 CLASS_ICON_TCOORDS = { WARRIOR = { 0, 0.25, 0, 0.25 } }
@@ -736,6 +742,78 @@ def test_client(label, flavor_setup, author):
     check((ev("framing()"), ev("showing()")) == ("0.25 0.25 x4.00", "0.25 0.25 x4.00"),
           f"a received publish shows the framing its sender saved ({ev('framing()')})")
     check(ev(rev) == ev("sentRev") and not ev("mark()"), "and loading it is not an edit of the receiver's own")
+
+    print("  -- bug report")
+    lua.execute("""
+        bug = window.bugButton
+        function report() return RaidMapBugFrame.edit:GetText() end
+        function has(text) return report():find(text, 1, true) ~= nil end
+        function typeNote(text)
+            local note = RaidMapBugFrame.note
+            note:SetText(text)
+            note.scripts.OnTextChanged(note, true)
+        end
+    """)
+    check(ev("bug:GetText() == 'Report a bug' and bug.parent ~= window and bug._points[1][3] == 'LEFT'")
+          and ev("RaidMapBugFrame == nil"),
+          "Report a bug sits in the title bar beside the close button, and its window is not built until asked for")
+    lua.execute("group.raid, group.leader = true, true click(bug)")
+    check(ev("RaidMapBugFrame:IsShown()"), "clicking it opens the report window")
+    first = ev("report():match('^[^\\n]*')")
+    check(first == "=== RaidMap bug report, for lavitzstarlove@pm.me ===" and ev("RaidMapBugFrame.address:GetText()")
+          == "Email it to |cffffd100lavitzstarlove@pm.me|r",
+          f"the report opens with where to send it, and so does the window ({first})")
+    client_line = ev("('client: %s (%s), interface %d, %s'):format(GetBuildInfo(), select(2, GetBuildInfo()), "
+                     "select(4, GetBuildInfo()), ns.FLAVOR)")
+    check(ev("has('version: dev')") and ev(f"has({client_line!r})") and ev("has('locale: enUS')")
+          and ev("has('screen: 2560x1440, UI scale 1.00')"),
+          f"it says which addon version and which client ({client_line})")
+    check(ev(f"has('character: {author}, SHAMAN level 70')") and ev("has('zone: Black Temple (raid instance)')")
+          and ev("has('group: raid of 25, leader')") and ev("has('sync: can publish')"),
+          "who is reporting, where they are and what they may do in the group")
+    lua.execute("""
+        local pack, board = ns:CurrentPack(), ns:CurrentBoard()
+        packLine = ('pack: "%s" rev %d by %s, %d boards'):format(pack.title, pack.revision, pack.author, #pack.boards)
+        boardLine = ('board: %d of %d, "%s"'):format(pack.currentBoard, #pack.boards, board.name)
+    """)
+    check(ev("has(packLine) and has(boardLine)") and ev("has('map: blank (Blank Canvas)')"),
+          f"and what they had up: the pack, the board and the slide's map ({ev('packLine')})")
+    check(ev("has('windows: editor closed, present mode closed')"), "with the editor shut, it says so")
+    lua.execute("window:Show() click(bug) window:Hide()")
+    check(ev("has('windows: editor open at 1060x660, present mode closed')"), "and open, how big it is")
+    lua.execute("""
+        ns.Model:ClearSlide(elements() and ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide or 1])
+        advance(0.1) click(palette[1]) click(palette[2]) click(palette[9])
+        click(bug)
+    """)
+    check(ev("has('2 marker, 1 role')"), "the slide's line counts what is on it by kind")
+    check(ev("has('--- what went wrong ---\\n(nothing written)')"), "with no note yet, it says so")
+    lua.execute("typeNote('  the map went blank after a publish  ')")
+    check(ev("has('--- what went wrong ---\\nthe map went blank after a publish\\n')")
+          and ev("RaidMapBugFrame.protected == report()"),
+          "a note goes into the report as it is typed")
+    lua.execute("""
+        local edit = RaidMapBugFrame.edit
+        kept = report()
+        edit:SetText("mangled")
+        edit.scripts.OnTextChanged(edit, true)
+    """)
+    check(ev("report() == kept"), "typing over the report itself puts it back")
+    lua.execute("ns:Print('|cffff5555Unknown map \\'%s\\'.|r', 'nowhere') click(bug)")
+    check(ev("report():find(\"%-%-%- recent messages %-%-%-\\n.*%d%d:%d%d:%d%d  Unknown map 'nowhere'%.\") ~= nil"),
+          "what the addon said lately is quoted, without its colour codes")
+    check(ev("has('the map went blank after a publish')"), "and reopening the window keeps the note")
+    lua.execute("""
+        local real = GetRealZoneText
+        GetRealZoneText = nil
+        click(bug)
+        GetRealZoneText = real
+    """)
+    check(ev("has('zone: (could not read: ')") and ev("has('version: dev')") and ev("has('map: blank (')"),
+          "something the client will not answer costs its own line, not the report")
+    lua.execute("RaidMapBugFrame:Hide() SlashCmdList.RAIDMAP('bug') group.raid, group.leader = false, false")
+    check(ev("RaidMapBugFrame:IsShown()") and ev("has('zone: Black Temple')"), "/rm bug opens it too")
+    lua.execute("RaidMapBugFrame:Hide()")
 
     check(ev("SLASH_RAIDMAP1 == '/raidmap' and SLASH_RAIDMAP2 == '/rm' and SlashCmdList.RAIDMAP ~= nil"),
           "/raidmap and /rm are the slash commands")

@@ -12,6 +12,8 @@ Now [live on CurseForge!](https://www.curseforge.com/wow/addons/raidmap)
 Also submitting to Wago.io to host strings for packs.
 
 > Still testing heavily. Please [submit bugs here!](https://github.com/brucestarlove/RaidMap/issues)
+> Or press **Report a bug** at the top of the editor, which writes up a report
+> to copy and email.
 
 Quickie video I'll re-make later: [![Introducing: RaidMap](https://img.youtube.com/vi/MhBSdLJ5KoQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=MhBSdLJ5KoQ)
 
@@ -75,6 +77,7 @@ Type `/rm` (or `/raidmap`) to open the editor.
 | `/rm present` | Open or close the read-only view |
 | `/rm publish` | Send the current pack to your group |
 | `/rm restore` | Bring back the pack that the last incoming update replaced |
+| `/rm bug` | Write up a bug report to copy and email |
 | `/rm reset` | Put the window back in the middle of the screen at its default size |
 
 ## Credits

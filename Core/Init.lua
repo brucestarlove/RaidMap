@@ -6,8 +6,9 @@ ns.ADDON = ADDON
 -- are gone. Keep the fallback so the addon survives on either.
 local GetAddOnMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or _G.GetAddOnMetadata
 local version = GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version")
--- The packager writes the release tag over a placeholder in the TOC. Loaded
--- straight from the repository, the placeholder is still there.
+-- The packager writes the release tag over a placeholder in the TOC, which
+-- says "dev" when loaded straight from the repository. This covers a TOC that
+-- ends up with neither: no version at all, or the placeholder left in.
 if not version or version:find("@", 1, true) then version = "dev" end
 ns.VERSION = version
 
@@ -62,6 +63,19 @@ function ns.PopupEditBox(dialog)
 	return dialog.EditBox or dialog.editBox
 end
 
+-- The last things the addon said or tripped over, for a bug report to quote.
+-- This session's only: a report is written in the session that went wrong.
+local LOG_LINES = 40
+ns.log = {}
+
+function ns.Log(text)
+	local log = ns.log
+	-- Without the colour codes: a report is read as plain text.
+	text = tostring(text):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+	log[#log + 1] = date("%H:%M:%S") .. "  " .. text
+	if #log > LOG_LINES then table.remove(log, 1) end
+end
+
 -- Minimal event emitter. The Model/Render split means Render listens for model
 -- changes rather than the model reaching into frames.
 local Events = {}
@@ -89,7 +103,9 @@ function Events:Fire(event, ...)
 	for i = 1, #list do
 		local ok, err = pcall(list[i], ...)
 		if not ok then
-			geterrorhandler()(("RaidMap: handler for '%s' failed: %s"):format(event, err))
+			local message = ("RaidMap: handler for '%s' failed: %s"):format(event, err)
+			ns.Log(message)
+			geterrorhandler()(message)
 		end
 	end
 end
@@ -127,6 +143,7 @@ local defaults = {
 
 function ns:Print(fmt, ...)
 	local msg = select("#", ...) > 0 and fmt:format(...) or fmt
+	ns.Log(msg)
 	print("|cff66ccffRaidMap|r: " .. msg)
 end
 
@@ -152,6 +169,8 @@ loader:SetScript("OnEvent", function(self, event, name)
 			ns.Census:Run()
 		elseif msg == "publish" then
 			ns.Comm:PublishPack()
+		elseif msg == "bug" then
+			ns.ShowBugReport()
 		elseif msg == "restore" then
 			-- Escape hatch: an incoming pack replaced work you wanted.
 			local backup = ns.db.profile.backupPack

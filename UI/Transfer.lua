@@ -28,7 +28,8 @@ end
 ------------------------------------------------------------------ text frame
 
 -- Named, because UISpecialFrames takes a global frame name: registering a name
--- nothing answers to means Escape does not close these.
+-- nothing answers to means Escape does not close these. The bug report window
+-- is one of these too, with more laid out above the text.
 local function CreateTextFrame(name, title, editable)
 	local frame = CreateFrame("Frame", name, UIParent,
 		BackdropTemplateMixin and "BackdropTemplate" or nil)
@@ -68,6 +69,7 @@ local function CreateTextFrame(name, title, editable)
 	local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
 	scroll:SetPoint("TOPLEFT", 16, -50)
 	scroll:SetPoint("BOTTOMRIGHT", -34, 46)
+	frame.scroll = scroll
 
 	local edit = CreateFrame("EditBox", nil, scroll)
 	edit:SetMultiLine(true)
@@ -93,6 +95,7 @@ local function CreateTextFrame(name, title, editable)
 	tinsert(UISpecialFrames, name)
 	return frame
 end
+ns.CreateTextFrame = CreateTextFrame
 
 local exportFrame, importFrame
 
