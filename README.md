@@ -37,7 +37,9 @@ wrapped it in a second folder, move the inner `RaidMap` up into `AddOns`.
 
 ## Using it
 
-Type `/rm` (or `/raidmap`) to open the editor.
+Type `/rm` (or `/raidmap`) to open the editor, or left click the minimap icon.
+Right click the icon for a quick menu; **Options > AddOns > RaidMap** shows or
+hides it.
 
 - **Pack > Board > Slide.** A pack is what you share ("BT guild"), a board is
   one boss, a slide is one phase. The three dropdowns across the top pick the
@@ -78,6 +80,7 @@ Type `/rm` (or `/raidmap`) to open the editor.
 | `/rm publish` | Send the current pack to your group |
 | `/rm restore` | Bring back the pack that the last incoming update replaced |
 | `/rm bug` | Write up a bug report to copy and email |
+| `/rm minimap` | Show or hide the minimap icon |
 | `/rm reset` | Put the window back in the middle of the screen at its default size |
 
 ## Credits
@@ -86,4 +89,5 @@ Created by *Lavitz Starlove*.
 
 RaidMap bundles these libraries, each under its own licence: LibStub and
 ChatThrottleLib (public domain), CallbackHandler-1.0, AceDB-3.0 and AceComm-3.0
-(Ace3), LibSerialize (MIT), LibDeflate (LGPL 3) and LibUIDropDownMenu.
+(Ace3), LibSerialize (MIT), LibDeflate (LGPL 3), LibUIDropDownMenu,
+LibDataBroker-1.1 and LibDBIcon-1.0.

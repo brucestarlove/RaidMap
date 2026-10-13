@@ -138,6 +138,9 @@ local defaults = {
 		-- Last viewed map, so reopening lands where you left off.
 		lastMap = "blacktemple",
 		showNotes = true,
+		-- The minimap button. LibDBIcon is handed this table and keeps the
+		-- button's place round the minimap in it as well.
+		minimap = { hide = false },
 	},
 }
 
@@ -171,6 +174,11 @@ loader:SetScript("OnEvent", function(self, event, name)
 			ns.Comm:PublishPack()
 		elseif msg == "bug" then
 			ns.ShowBugReport()
+		elseif msg == "minimap" then
+			-- The way back for an icon hidden from its own menu.
+			local shown = ns.db.profile.minimap.hide
+			ns.SetMinimapShown(shown)
+			ns:Print(shown and "Minimap icon shown." or "Minimap icon hidden.")
 		elseif msg == "restore" then
 			-- Escape hatch: an incoming pack replaced work you wanted.
 			local backup = ns.db.profile.backupPack

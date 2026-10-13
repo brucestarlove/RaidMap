@@ -150,6 +150,12 @@ CLASS_ICON_TCOORDS = { WARRIOR = { 0, 0.25, 0, 0.25 } }
 RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 } }
 C_Map = { GetMapInfo = noop, GetMapArtLayers = noop, GetMapArtLayerTextures = noop }
 function BUS() end
+-- The Settings window, as far as taking a page for its AddOns list.
+addonPages = {}
+Settings = {
+    RegisterCanvasLayoutCategory = function(panel, name) return { panel = panel, name = name } end,
+    RegisterAddOnCategory = function(category) addonPages[#addonPages + 1] = category end,
+}
 -- A handler that throws is a failed test, not a line in a log nobody reads.
 function geterrorhandler() return function(msg) error(msg, 0) end end
 """
@@ -172,6 +178,19 @@ function menuOf(dropdown)
     dropdown.build(dropdown, 1)
     return table.concat(menu, " / ")
 end
+-- A menu put up in one go is kept whole, with where and how it was put up.
+function LibDD:EasyMenu(list, frame, anchor, x, y, mode) easyMenu = { list = list, frame = frame, anchor = anchor, mode = mode } end
+
+-- The broker hands an object back as it was given, and the icon library
+-- remembers what it was registered with and whether it is showing.
+local LDB = LibStub:NewLibrary("LibDataBroker-1.1", 1)
+function LDB:NewDataObject(_, object) return object end
+local LibDBIcon = LibStub:NewLibrary("LibDBIcon-1.0", 1)
+LibDBIcon.tooltip = CreateFrame("GameTooltip")
+minimapIcons = {}
+function LibDBIcon:Register(name, object, db) minimapIcons[name] = { object = object, db = db, shown = not db.hide } end
+function LibDBIcon:Show(name) minimapIcons[name].shown = true end
+function LibDBIcon:Hide(name) minimapIcons[name].shown = false end
 """
 
 # WoW Forever as it names people: a first name and a surname, on a realm that
@@ -814,6 +833,77 @@ def test_client(label, flavor_setup, author):
     lua.execute("RaidMapBugFrame:Hide() SlashCmdList.RAIDMAP('bug') group.raid, group.leader = false, false")
     check(ev("RaidMapBugFrame:IsShown()") and ev("has('zone: Black Temple')"), "/rm bug opens it too")
     lua.execute("RaidMapBugFrame:Hide()")
+
+    print("  -- minimap button and options page")
+    lua.execute("""
+        icon = minimapIcons.RaidMap
+        tip = { lines = {} }
+        function tip:AddLine(text, r, g, b) self.lines[#self.lines + 1] = { text, r, g, b } end
+        function minimapClick(mouse) icon.object.OnClick(nil, mouse) end
+        function said(text)
+            for _, line in ipairs(printed) do
+                if line:find(text, 1, true) then return true end
+            end
+            return false
+        end
+        window:Hide()
+    """)
+    check(ev("icon ~= nil and icon.db == ns.db.profile.minimap and icon.shown")
+          and ev("icon.object.icon") == "Interface\\AddOns\\RaidMap\\Art\\Icon" and ev("icon.object.type") == "launcher",
+          "the minimap button is registered on the profile's own table, showing, with the addon's icon")
+    lua.execute("icon.object.OnTooltipShow(tip)")
+    check(ev("#tip.lines") == 3 and ev("tip.lines[1][1] == 'RaidMap' and tip.lines[1][2] == 1 and tip.lines[1][4] == 1")
+          and ev("tip.lines[2][1]") == "|cffcfcfcfleft click|r: open or close the editor"
+          and ev("tip.lines[3][1]") == "|cffcfcfcfright click|r: quick menu",
+          f"hovering names the addon in white and says what each click does ({ev('tip.lines[2][1]')})")
+    lua.execute("minimapClick('LeftButton')")
+    opened = ev("window:IsShown()")
+    lua.execute("minimapClick('LeftButton')")
+    check(opened and not ev("window:IsShown()") and ev("easyMenu == nil"),
+          "a left click opens the editor and the next one closes it, with no menu")
+    lua.execute("LibStub('LibDBIcon-1.0').tooltip:Show() minimapClick('RightButton')")
+    check(ev("easyMenu ~= nil and easyMenu.mode == 'MENU' and easyMenu.anchor == 'cursor'")
+          and ev("easyMenu.frame == RaidMapMinimapMenu") and not ev("window:IsShown()")
+          and not ev("LibStub('LibDBIcon-1.0').tooltip:IsShown()"),
+          "a right click puts a menu up at the cursor, takes the tooltip down and leaves the editor shut")
+    check(ev("#easyMenu.list") == 2 and ev("easyMenu.list[1].text == 'RaidMap' and easyMenu.list[1].isTitle == true")
+          and ev("easyMenu.list[2].text") == "Hide Minimap Icon" and ev("easyMenu.list[2].notCheckable == true"),
+          "the menu is the addon's name over one entry, Hide Minimap Icon")
+    lua.execute("easyMenu.list[2].func()")
+    check(ev("ns.db.profile.minimap.hide == true") and not ev("icon.shown")
+          and ev("said('Minimap icon hidden. /rm minimap brings it back')"),
+          "picking it hides the icon, remembers that, and says in chat how to get it back")
+    lua.execute("SlashCmdList.RAIDMAP('minimap')")
+    check(ev("ns.db.profile.minimap.hide == false") and ev("icon.shown") and ev("said('Minimap icon shown.')"),
+          "/rm minimap brings it back")
+    lua.execute("SlashCmdList.RAIDMAP(' MiniMap ')")
+    check(ev("ns.db.profile.minimap.hide == true") and not ev("icon.shown"), "and hides it again, however it is typed")
+
+    check(ev("#addonPages") == 1 and ev("addonPages[1].name") == "RaidMap" and ev("addonPages[1].panel == ns.optionsPanel")
+          and not ev("ns.optionsPanel:IsShown()"),
+          "Options > AddOns has one RaidMap page, which stays hidden until it is opened there")
+    lua.execute("""
+        page, tick = ns.optionsPanel, ns.optionsPanel.minimapToggle
+        function pageTexts()
+            local out = {}
+            for _, f in ipairs(frames) do
+                if f.kind == "FontString" and f.parent == page then out[#out + 1] = f:GetText() end
+            end
+            return table.concat(out, " | ")
+        end
+        page:Show()
+    """)
+    texts = ev("pageTexts()")
+    check(texts == "RaidMap | Minimap | Show minimap icon",
+          f"the page is a title, one section heading and one labelled tick, and nothing else ({texts})")
+    check(ev("tick:GetChecked() == false"), "opened with the icon hidden, the tick is clear")
+    lua.execute("tick:SetChecked(true) tick.scripts.OnClick(tick)")
+    check(ev("ns.db.profile.minimap.hide == false") and ev("icon.shown"), "ticking it shows the icon")
+    lua.execute("tick:SetChecked(false) tick.scripts.OnClick(tick)")
+    check(ev("ns.db.profile.minimap.hide == true") and not ev("icon.shown"), "and unticking hides it")
+    lua.execute("page:Hide() SlashCmdList.RAIDMAP('minimap') page:Show()")
+    check(ev("tick:GetChecked() == true"), "a change made while the page was shut shows when it is opened again")
+    lua.execute("page:Hide()")
 
     check(ev("SLASH_RAIDMAP1 == '/raidmap' and SLASH_RAIDMAP2 == '/rm' and SlashCmdList.RAIDMAP ~= nil"),
           "/raidmap and /rm are the slash commands")
