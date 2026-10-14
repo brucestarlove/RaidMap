@@ -699,6 +699,191 @@ def test_client(label, flavor_setup, author):
     lua.execute("click(pathTool) before = #elements() stroke(0.2, 0.3, 0.6, 0.5)")
     check(ev("ns.Draw.tool == nil and #elements() == before") and ev("pathTool:GetText()") == "Path", "clicking the armed tool puts it away")
 
+    print("  -- text")
+    lua.execute(r"""
+        textTool = window.drawTools.text
+        for _, f in ipairs(frames) do
+            if f.kind == "EditBox" and f.parent == canvas then textBox = f end
+        end
+        mouseDown = {}
+        function IsMouseButtonDown(button) return mouseDown[button] or false end
+
+        -- A press and a release on the map, in one place or from one to another.
+        function clickMap(x, y, toX, toY)
+            cursorTo(x, y)
+            canvas.scripts.OnMouseDown(canvas, "LeftButton")
+            if toX then cursorTo(toX, toY) end
+            canvas.scripts.OnMouseUp(canvas, "LeftButton")
+        end
+        function typeText(text)
+            textBox:SetText(text)
+            textBox.scripts.OnTextChanged(textBox, true)
+        end
+        function enter() textBox.scripts.OnEnterPressed(textBox) end
+        function escape() textBox.scripts.OnEscapePressed(textBox) end
+        -- The left button going down anywhere but the box, seen by the box.
+        function pressElsewhere()
+            mouseDown.LeftButton = true
+            textBox.scripts.OnUpdate(textBox, 0)
+            mouseDown.LeftButton = nil
+        end
+        function clickToken(token, button)
+            token.scripts.OnMouseDown(token, button or "LeftButton")
+            token.scripts.OnClick(token, button or "LeftButton")
+        end
+        function texts()
+            local out = {}
+            for _, e in ipairs(elements()) do
+                if e.kind == "text" then out[#out + 1] = e.data.text end
+            end
+            return table.concat(out, " / ")
+        end
+        function steps() return ns.History.pos end
+
+        ns.Model:ClearSlide(ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide])
+    """)
+
+    cleaned = ev(r"""ns.Model:CleanText("  Tank|cffff0000 here\n\tnow  ") .. "/" .. ns.Model:CleanText(nil)""")
+    check(cleaned == "Tankcffff0000 here  now/", f"text is cleaned to one line with no pipes in it ({cleaned!r})")
+    capped = ev(r"""(function()
+        local a = ns.Model:CleanText(string.rep("é", 60))
+        local b = ns.Model:CleanText(string.rep("\240\159\152\128", 49) .. "ab")
+        return #a .. " " .. #b .. " " .. b:sub(-1)
+    end)()""")
+    check(capped == "100 197 a", f"and capped at 50 letters, however many bytes each takes, never cutting one in half ({capped})")
+
+    lua.execute("click(textTool)")
+    check((ev("ns.Draw.tool"), ev("textTool:GetText()"), ev("arrowTool:GetText()")) == ("text", "|cffffffffText|r", "Arrow"),
+          "Text is armed from the same row as Arrow and Path, and lit")
+    lua.execute("advance(0.1) stroke(0.2, 0.3, 0.6, 0.5)")
+    check(ev("#elements()") == 0 and not ev("textBox:IsShown()"), "with Text armed, a drag on the map draws nothing and opens nothing")
+
+    lua.execute("advance(0.1) before = steps() clickMap(0.3, 0.4)")
+    check(ev("textBox:IsShown()") and ev("#elements()") == 0 and ev("textBox:GetWidth()") > 0,
+          "a click on the map opens a box there, wide enough for a letter, and nothing is on the slide yet")
+    lua.execute("typeText('Stack here') enter()")
+    e = ev("last()")
+    check(ev("#elements()") == 1 and e.kind == "text" and e.data.text == "Stack here" and near(e.x, e.y, 0.3, 0.4)
+          and e.data.color == ev("ns.Draw:Color()") and not ev("textBox:IsShown()"),
+          "Enter puts it on the slide where the click was, in the swatch's colour")
+    check(ev("steps() - before") == 1, "however many keys it took, it is one step to undo")
+    lua.execute("label = last() token = tokenOf(label)")
+    check(ev("token.text:GetText()") == "Stack here" and ev("token:GetFrameLevel() == canvas:GetFrameLevel() + 2"),
+          "it is drawn, over the paths")
+
+    lua.execute("advance(0.1) clickToken(token)")
+    aligned = ev("""(function()
+        local b, t = textBox._points[1], token._points[1]
+        return b[1] == t[1] and b[4] == t[4] + token.text._points[1][2] and b[5] == t[5]
+    end)()""")
+    check(ev("textBox:IsShown() and textBox:GetText() == 'Stack here' and not token:IsShown()") and aligned,
+          "clicking it opens the same box in its place, the first letter where the text's first letter was")
+
+    lua.execute("before = steps() typeText('Stack here!') pressElsewhere()")
+    check(ev("texts()") == "Stack here!" and not ev("textBox:IsShown()") and ev("tokenOf(label) ~= nil")
+          and ev("steps() - before") == 1, "a press anywhere else keeps the change, as one step")
+    lua.execute("ns.History:Undo()")
+    undone = ev("texts()")
+    lua.execute("ns.History:Redo()")
+    check((undone, ev("texts()")) == ("Stack here", "Stack here!"), "which undoes and redoes")
+
+    lua.execute("advance(0.1) before = steps() clickToken(tokenOf(label)) typeText('junk') escape()")
+    check(ev("texts()") == "Stack here!" and ev("steps() == before") and ev("tokenOf(label) ~= nil"),
+          "Escape drops what was typed and leaves the text as it was")
+
+    lua.execute("advance(0.1) clickMap(0.5, 0.6) typeText('a|b')")
+    check(ev("textBox:GetText()") == "ab", "a pipe is taken out as it is typed, so the box never shows a colour code")
+    lua.execute("advance(0.1) clickMap(0.7, 0.2)")
+    check(ev("texts()") == "Stack here! / ab" and not ev("textBox:IsShown()"),
+          "a click on the map while typing keeps the text and opens no second box")
+    lua.execute("advance(0.1) clickMap(0.5, 0.7) typeText('cd') pressElsewhere() clickMap(0.7, 0.2)")
+    check(ev("texts()") == "Stack here! / ab / cd" and not ev("textBox:IsShown()"),
+          "nor when the box saw the press first")
+
+    lua.execute("advance(0.1) before = steps() clickMap(0.1, 0.1) enter()")
+    check(ev("texts()") == "Stack here! / ab / cd" and ev("steps() == before"), "a box left empty adds nothing")
+    lua.execute("advance(0.1) n = #elements() clickToken(tokenOf(last())) typeText('   ') enter()")
+    check(ev("#elements() == n - 1") and ev("texts()") == "Stack here! / ab", "text typed away to nothing is deleted")
+    lua.execute("ns.History:Undo()")
+    check(ev("texts()") == "Stack here! / ab / cd", "and undo brings it back")
+
+    lua.execute("""
+        advance(0.1)
+        token = tokenOf(label)
+        token.scripts.OnMouseDown(token, "LeftButton")
+        token.scripts.OnDragStart(token)
+        cursorTo(0.6, 0.65)
+        token.scripts.OnUpdate(token)
+        token.scripts.OnDragStop(token)
+        token.scripts.OnClick(token, "LeftButton")
+    """)
+    check(near(ev("label.x"), ev("label.y"), 0.6, 0.65) and not ev("textBox:IsShown()"),
+          "dragging text moves it, and letting go is not taken for a click that opens it")
+    lua.execute("advance(0.1) clickToken(token)")
+    check(ev("textBox:IsShown()"), "the next plain click does")
+    lua.execute("canvas:SetView(0.5, 0.5, 2)")
+    moved = ev("""(function()
+        local x, y = canvas:NormalizedToOffset(label.x, label.y)
+        return textBox._points[1][4] == x and textBox._points[1][5] == y
+    end)()""")
+    check(moved, "an open box stays on its text through a zoom")
+    lua.execute("escape() canvas:SetView(0.5, 0.5, 1)")
+
+    lua.execute("""
+        advance(0.1)
+        clickMap(0.1, 0.9) typeText('Temp') enter()
+        advance(0.1)
+        clickToken(tokenOf(last())) typeText('Temp, edited')
+        ns.History:Undo()
+    """)
+    check(ev("texts()") == "Stack here! / ab / cd" and not ev("textBox:IsShown()"),
+          "undoing the text under an open box closes the box and keeps nothing")
+    lua.execute("ns.History:Redo()")
+    check(ev("texts()") == "Stack here! / ab / cd / Temp", "redo brings back the text as it was before the box opened")
+
+    lua.execute("""
+        advance(0.1)
+        slideCount(2)
+        ns.SwitchSlide(1)
+        clickMap(0.2, 0.2) typeText('Phase one')
+        ns.SwitchSlide(2)
+        textBox.scripts.OnUpdate(textBox, 0)
+        onSecond = #ns:CurrentBoard().slides[2].elements
+        ns.SwitchSlide(1)
+    """)
+    check(ev("texts()").endswith("Phase one") and ev("onSecond") == 0 and not ev("textBox:IsShown()"),
+          "changing slide while typing keeps the text, on the slide it was typed on")
+
+    lua.execute("""
+        before = #elements()
+        click(strip.copyButton)
+        copied = last()
+    """)
+    check(ev("#elements() == before and copied.kind == 'text' and copied.data.text == 'Phase one' and copied.data ~= label.data"),
+          "a copied slide has the same text, in data of its own")
+    lua.execute("click(strip.deleteButton) ns.SwitchSlide(1)")
+
+    lua.execute("""
+        ns.ShowPresentation()
+        RaidMapPresentFrame.canvas:SetSize(400, 300)
+        shownThere = tokenOf(label, RaidMapPresentFrame.tokens)
+    """)
+    check(ev("shownThere ~= nil and shownThere.text:GetText() == 'Stack here!'"), "the present window draws it too")
+    lua.execute("RaidMapPresentFrame:Hide()")
+
+    lua.execute("n = #elements() token = tokenOf(label) clickToken(token, 'RightButton')")
+    check(ev("#elements() == n - 1 and tokenOf(label) == nil") and not ev("textBox:IsShown()"),
+          "right-clicking it deletes it, and opens nothing")
+
+    # Hiding a window hides what is in it, which the stubs leave to the test.
+    lua.execute("advance(0.1) clickMap(0.4, 0.4) typeText('kept') window:Hide() canvas.scripts.OnHide(canvas) window:Show()")
+    check(ev("texts()").endswith("kept") and not ev("textBox:IsShown()"), "closing the window keeps what was being typed")
+
+    lua.execute("click(textTool) advance(0.1) n = #elements() clickMap(0.4, 0.4)")
+    check(ev("ns.Draw.tool == nil and textTool:GetText() == 'Text'") and not ev("textBox:IsShown()") and ev("#elements() == n"),
+          "clicking Text again puts it away, and a click on the map opens nothing")
+    lua.execute("ns.Model:ClearSlide(ns:CurrentBoard().slides[ns:CurrentBoard().currentSlide])")
+
     print("  -- framing")
     lua.execute("""
         function framing(slide)

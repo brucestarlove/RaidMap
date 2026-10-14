@@ -56,6 +56,11 @@ hides it.
   a path follows the pointer. The tool stays on until you click it again, and
   the swatch beside it picks the colour of the next one. Drag the end with the
   arrowhead to move one, right-click there to delete it.
+- **Text.** Click **Text**, then click on the map where the text should start
+  and type. It is one line of up to 50 letters, in the swatch's colour. Enter
+  or a click anywhere else keeps it, and Escape drops it. Click text to change
+  it, with or without the tool, drag it to move it, and right-click it to
+  delete it. Raiders need this version or later to see text.
 - **Mouse.** Left-drag moves a token, right-click deletes it. Right-drag pans
   the map and the wheel zooms. Each slide remembers its own framing.
 - **Notes** sit beside the map, per slide or for the whole board.
@@ -89,9 +94,11 @@ hides it.
 
 ## Credits
 
-Created by *Lavitz Starlove*.
+Lavitz Starlove designer & developer.
+Corwynn and Blacklisted helping test.
 
 RaidMap bundles these libraries, each under its own licence: LibStub and
 ChatThrottleLib (public domain), CallbackHandler-1.0, AceDB-3.0 and AceComm-3.0
 (Ace3), LibSerialize (MIT), LibDeflate (LGPL 3), LibUIDropDownMenu,
 LibDataBroker-1.1 and LibDBIcon-1.0.
+

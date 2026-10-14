@@ -224,14 +224,32 @@ end
 
 local PALETTE_HINT = "Click to add, or drag onto the map."
 
+local PATH_HELP = {
+	"Drag the end with the arrowhead to move it,",
+	"right-click there to delete it.",
+	"Click again to stop drawing.",
+}
+
 local DRAW_TOOLS = {
 	{
 		key = "arrow", text = "Arrow", title = "Draw arrows",
 		hint = "Drag on the map from where it starts to where it points.",
+		help = PATH_HELP,
 	},
 	{
 		key = "path", text = "Path", title = "Draw paths",
 		hint = "Drag on the map and the path follows the pointer.",
+		help = PATH_HELP,
+	},
+	{
+		key = "text", text = "Text", title = "Add text",
+		hint = "Click on the map where the text starts, and type.",
+		help = {
+			"Enter or a click elsewhere keeps it, Escape drops it.",
+			"Click text to change it, drag it to move it,",
+			"right-click it to delete it.",
+			"Click again to stop adding text.",
+		},
 	},
 }
 
@@ -379,8 +397,8 @@ local function CreateWindow()
 		end)
 	end
 
-	-- Drawing tools: each arms a left-drag on the map, and stays armed until it
-	-- is clicked again.
+	-- Drawing tools: each arms a left-drag on the map (a click, for Text), and
+	-- stays armed until it is clicked again.
 	frame.drawTools = {}
 	local lastTool
 	for _, tool in ipairs(DRAW_TOOLS) do
@@ -396,9 +414,7 @@ local function CreateWindow()
 			GameTooltip:SetOwner(self, "ANCHOR_TOP")
 			GameTooltip:AddLine(tool.title)
 			GameTooltip:AddLine(tool.hint, 0.6, 0.6, 0.6)
-			GameTooltip:AddLine("Drag the end with the arrowhead to move it,", 0.6, 0.6, 0.6)
-			GameTooltip:AddLine("right-click there to delete it.", 0.6, 0.6, 0.6)
-			GameTooltip:AddLine("Click again to stop drawing.", 0.6, 0.6, 0.6)
+			for _, line in ipairs(tool.help) do GameTooltip:AddLine(line, 0.6, 0.6, 0.6) end
 			GameTooltip:Show()
 		end)
 		button:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -421,7 +437,7 @@ local function CreateWindow()
 	swatch:SetScript("OnClick", function() ns.Draw:NextColor() end)
 	swatch:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
-		GameTooltip:AddLine("Colour of new arrows and paths")
+		GameTooltip:AddLine("Colour of new arrows, paths and text")
 		GameTooltip:AddLine(ns.PATH_COLORS[ns.Draw:Color()].name .. ". Click for the next one.", 0.6, 0.6, 0.6)
 		GameTooltip:Show()
 	end)
@@ -573,6 +589,7 @@ local function CreateWindow()
 
 	ns.TokenLayer = ns.CreateTokenLayer(canvas)
 	ns.Draw:Attach(canvas, ns.TokenLayer)
+	ns.Text:Attach(canvas, ns.TokenLayer)
 
 	-- Slide strip, anchored to the canvas so it tracks the notes panel opening
 	-- and closing rather than running underneath it.

@@ -7,6 +7,9 @@ follows the pointer between the two. Either way the result is one "path"
 element (Model:PathShape), so moving, deleting, undo, copying a slide and
 publishing all treat it like any other token.
 
+The Text tool is armed from the same row and put away the same way, but a
+click with it opens a box to type in rather than drawing (UI/Text.lua).
+
 A tool stays armed until it is clicked again. Nothing else uses a left-drag on
 bare map, a token under the pointer still takes the mouse first, and three
 arrows should not take three trips to the toolbar.
@@ -89,6 +92,7 @@ function Draw:Shape(canvas)
 end
 
 function Draw:Begin(canvas)
+	if self.tool == "text" then return end
 	local pointer = Pointer(canvas)
 	if not pointer then return end
 	self.stroke = { tool = self.tool, points = { pointer }, step = STEP }

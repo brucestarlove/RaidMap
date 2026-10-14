@@ -456,6 +456,28 @@ rather than drawn as whatever its pooled token was last. `CreateLine` /
 AtlasLootClassic call them in the Anniversary client. **Not yet seen in game:**
 any of it, including how the lines read over map art.
 
+**Text is one element kind, `text`** (`UI/Text.lua`, `Model:SetText`,
+2026-10-14). One line of plain text in one size (14, outlined) and a path
+colour. It starts at the element's position, keeps its pixel size at any zoom
+and never wraps, so it cannot break differently on another client or font.
+`Model:CleanText` takes out pipes (so no colour codes, textures or links) and
+control characters, and caps the text at 50 letters without splitting a UTF-8
+sequence. It runs when typing ends and again when drawing, so a pack made
+elsewhere is drawn clean. Typing happens in an edit box over the map, in the
+same font and starting at the same pixel. Nothing is written to the slide until
+the box closes (Enter, or a press anywhere else), so an edit is one undo step
+and one change to publish. Escape drops the edit, and text typed empty is
+deleted. A press elsewhere is polled with `IsMouseButtonDown` from the box's
+`OnUpdate`, since no event reports it in both clients; the canvas's own
+`OnMouseDown` catches a press on the map. Either way, that press only finishes
+the text. A token notes when a press became a drag, and the next `OnMouseDown`
+clears it, so letting go of a drag never opens text, whether or not the client
+follows it with a click. The export format version is unchanged. A client older
+than this keeps text in the pack and passes it on, but draws nothing. Ten
+labels of about 26 letters add roughly 200 bytes to a publish. **Not yet seen
+in game:** whether the box and the finished text line up to the pixel, and
+whether the client sends a click after a drag.
+
 ### Phase 4 — Sync
 
 **Status: ✅ VERIFIED on two clients (two subscriptions). Board publish, slide
@@ -690,8 +712,9 @@ need curation. One pass per beta build, ~10 minutes:
    first look needs no game: `https://wago.tools/api/casc/<fileDataID>?download&version=<build>`
    returns the tile as a BLP (Pillow opens BLP2), 12 tiles row-major per floor.
    Do this for any art whose name is a guess — names lie (§0).
-5. Run both test scripts (§3 Phase 1), commit (`Data/`, `tools/instances.json`,
-   `tools/snapshots/`, `tools/reports/`).
+5. Run both test scripts (§3 Phase 1), commit (`Data/`, `tools/instances.json`).
+   `tools/snapshots/` and `tools/reports/` are gitignored and stay on this
+   machine; the snapshot is what the next build is diffed against, so keep it.
 
 After launch (Nov 4), the product name will change: `python3 tools/mapdata.py
 --products` lists every wago product carrying 1.60.x builds; pass the new one

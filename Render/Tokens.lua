@@ -65,6 +65,24 @@ local PATH_HANDLE = 18
 local HEAD_LENGTH = 12
 local HEAD_COS, HEAD_SIN = math.cos(math.rad(28)), math.sin(math.rad(28))
 
+--[[
+Text: one line, one size, in a path colour. It starts at the element's
+position and runs right, the same number of pixels high at any zoom, and it
+never wraps, so it cannot break differently on another client. The box it is
+typed in (UI/Text.lua) uses the same font, so typing and the finished text
+line up.
+]]
+local TEXT_SIZE = 14
+local TEXT_PAD = 3
+ns.TEXT_HEIGHT = TEXT_SIZE + 2 * TEXT_PAD
+
+-- Outlined, like every label on the map. A label's own font is the one the
+-- client picked for its language, so it covers what the client can show.
+function ns.SetTextFont(region)
+	local path = GameFontHighlight and GameFontHighlight:GetFont() or STANDARD_TEXT_FONT
+	region:SetFont(path, TEXT_SIZE, "OUTLINE")
+end
+
 local function PlaceLine(line, canvas, fromX, fromY, toX, toY)
 	line:SetStartPoint("TOPLEFT", canvas, fromX, fromY)
 	line:SetEndPoint("TOPLEFT", canvas, toX, toY)
@@ -127,6 +145,12 @@ function LayerMixin:AcquireToken(index)
 	local fontPath, fontSize = token.label:GetFont()
 	if fontPath then token.label:SetFont(fontPath, fontSize, "OUTLINE") end
 
+	token.text = token:CreateFontString(nil, "OVERLAY")
+	ns.SetTextFont(token.text)
+	token.text:SetJustifyH("LEFT")
+	token.text:SetWordWrap(false)
+	token.text:SetPoint("LEFT", TEXT_PAD, 0)
+
 	if layer.readOnly then
 		-- Read-only is structural, not a promise not to click: with the mouse
 		-- off, a token cannot be moved or deleted, and right-drag panning works
@@ -134,14 +158,20 @@ function LayerMixin:AcquireToken(index)
 		token:EnableMouse(false)
 	else
 		token:RegisterForDrag("LeftButton")
-		token:RegisterForClicks("RightButtonUp")
+		token:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
 		token.highlight = token:CreateTexture(nil, "HIGHLIGHT")
 		token.highlight:SetAllPoints()
 		token.highlight:SetColorTexture(1, 1, 1, 0.25)
 
+		-- Letting go of a drag can also count as a click, and a left-click on
+		-- text opens it for typing. Set by the drag and cleared by the next
+		-- press, so it holds whether the client sends that click or not.
+		token:SetScript("OnMouseDown", function(self) self.dragged = nil end)
+
 		token:SetScript("OnDragStart", function(self)
 			self.dragging = true
+			self.dragged = true
 			-- Captured for undo: the model only learns about the move on drag stop.
 			self.fromX, self.fromY = self.element.x, self.element.y
 		end)
@@ -167,6 +197,8 @@ function LayerMixin:AcquireToken(index)
 		token:SetScript("OnClick", function(self, button)
 			if button == "RightButton" then
 				ns.Model:RemoveElement(layer.slide, self.element)
+			elseif self.element.kind == "text" and not self.dragged then
+				ns.Text:Edit(self.element)
 			end
 		end)
 	end
@@ -174,7 +206,11 @@ function LayerMixin:AcquireToken(index)
 	function token:Reposition()
 		local ox, oy = canvas:NormalizedToOffset(self.element.x, self.element.y)
 		self:ClearAllPoints()
-		self:SetPoint("CENTER", canvas, "TOPLEFT", ox, oy)
+		if self.element.kind == "text" then
+			self:SetPoint("LEFT", canvas, "TOPLEFT", ox - TEXT_PAD, oy)
+		else
+			self:SetPoint("CENTER", canvas, "TOPLEFT", ox, oy)
+		end
 		if self.element.kind == "path" then LayoutPath(self, canvas, ox, oy) end
 	end
 
@@ -279,7 +315,23 @@ local function StylePath(token, element)
 	end
 end
 
-local STYLES = { marker = StyleMarker, player = StylePlayer, role = StyleRole, path = StylePath }
+-- Cleaned again here, not only when typed: a pack from someone else's client
+-- is drawn as it arrives.
+local function StyleText(token, element)
+	token.icon:Hide()
+	token.label:SetText("")
+
+	local color = ns.PATH_COLORS[element.data.color] or ns.PATH_COLORS[1]
+	local text = ns.Model:CleanText(element.data.text)
+	token.text:SetTextColor(color[1], color[2], color[3], 1)
+	token.text:SetText(text ~= "" and text or "?")
+	token.text:Show()
+
+	-- The token is the text's own size, so that is what takes the mouse.
+	token:SetSize(token.text:GetStringWidth() + 2 * TEXT_PAD, ns.TEXT_HEIGHT)
+end
+
+local STYLES = { marker = StyleMarker, player = StylePlayer, role = StyleRole, path = StylePath, text = StyleText }
 
 -- Paths lie under the tokens standing on them. Set on every styling, because
 -- a pooled token is a path one refresh and a raid marker the next.
@@ -288,6 +340,7 @@ local function Dress(token, element, board, canvas)
 	if not isPath then
 		for _, line in ipairs(token.lines) do line:Hide() end
 	end
+	if element.kind ~= "text" then token.text:Hide() end
 	token:SetFrameLevel(canvas:GetFrameLevel() + (isPath and 1 or 2))
 	STYLES[element.kind](token, element, board)
 	token:Reposition()
@@ -310,11 +363,12 @@ function LayerMixin:Refresh()
 		local token = self:AcquireToken(i)
 		token.element = element
 
-		if STYLES[element.kind] then
+		if STYLES[element.kind] and element ~= self.editing then
 			Dress(token, element, board, self.canvas)
 		else
-			-- A kind from a newer version than this one. Not drawn, rather
-			-- than drawn as whatever this token was last.
+			-- A kind from a newer version than this one, not drawn rather than
+			-- drawn as whatever this token was last. Or text that is open for
+			-- typing, which the box stands in for until it is done.
 			token:Hide()
 		end
 	end
@@ -337,6 +391,12 @@ function LayerMixin:SetPreview(element)
 	token:EnableMouse(false)
 	token.element = element
 	Dress(token, element, nil, self.canvas)
+end
+
+-- The text being typed over, or nil once it is done.
+function LayerMixin:SetEditing(element)
+	self.editing = element
+	self:Refresh()
 end
 
 function LayerMixin:RepositionAll()

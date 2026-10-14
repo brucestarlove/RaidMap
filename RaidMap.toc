@@ -7,9 +7,9 @@
 ## X-Curse-Project-ID: 1731366
 
 #@debug@
-# Loaded straight from the repository, the version is "dev". The packager
-# deletes this block and uncomments the next, so a release carries its tag.
-## Version: dev
+# Repository version for the next release. The packager deletes this block
+# and uncomments the next, so a release carries its tag.
+## Version: 1.1.0
 #@end-debug@
 #@non-debug@
 # ## Version: @project-version@
@@ -41,6 +41,7 @@ UI\Transfer.lua
 UI\BugReport.lua
 UI\PlaceDrag.lua
 UI\Draw.lua
+UI\Text.lua
 UI\RosterPanel.lua
 UI\Filmstrip.lua
 UI\NotesPanel.lua

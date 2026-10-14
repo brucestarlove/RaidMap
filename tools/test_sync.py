@@ -458,6 +458,37 @@ def test_party():
     end)()""")
     check(same(uid, x, y) and got == "path -1600 -800 -800 -200 colour 3", f"a drawn path is published like any token ({got})")
 
+    # Accents, Cyrillic, CJK, an emoji, quotes and the cleaned remains of a
+    # colour code and a new line.
+    x.do(r"""
+        local slide, board = slideOf(1)
+        awkward = ns.Model:CleanText("Ünïcödé Тест 中文 😀 \"q\" '|cffff0000red|r'\nnext")
+        ns.Model:AddElement(slide, ns.Model:NewElement(board, "text", 0.25, 0.75, { text = awkward, color = 4 }))
+        ns.Comm:PublishPack()
+    """)
+    w.run()
+    text_of = f"""(function()
+        local elements = ns.db.profile.packs["{uid}"].boards[1].slides[1].elements
+        local e = elements[#elements]
+        return e.kind .. " " .. e.data.text .. " colour " .. e.data.color .. (" at %.2f %.2f"):format(e.x, e.y)
+    end)()"""
+    sent, got = x.get(text_of), y.get(text_of)
+    check(same(uid, x, y) and got == sent and "|" not in got and "\n" not in got,
+          f"text is published byte for byte ({got})")
+    x.do("""
+        local elements = ns:CurrentBoard().slides[1].elements
+        ns.Model:SetText(ns:CurrentBoard().slides[1], elements[#elements], "Edited 中文")
+        ns.Comm:PublishPack()
+    """)
+    w.run()
+    check(same(uid, x, y) and y.get(text_of).startswith("text Edited 中文 colour 4"), "and an edit to it publishes again")
+    x.do('copy = ns.Serialize:UnpackFromExport(ns.Pack:Snapshot(ns:CurrentPack()))')
+    exported = x.get("""(function()
+        local elements = copy.boards[1].slides[1].elements
+        return elements[#elements].data.text
+    end)()""")
+    check(exported == "Edited 中文", f"and comes back the same from an export string ({exported})")
+
     z = w.join("Zed", party=True)
     w.run(11)   # past the announce throttle
     x.do('fire("GROUP_ROSTER_UPDATE")')

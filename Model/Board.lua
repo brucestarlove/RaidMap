@@ -60,7 +60,7 @@ have a single implementation.
 	kind = "marker"  data.index = 1..8   (raid target icons)
 	kind = "player"  data.name, data.class, data.spec   (Phase 2)
 	kind = "role"    data.role
-	kind = "text"    data.text
+	kind = "text"    data.text, data.color   (one line of plain text, see CleanText)
 	kind = "path"    data.pts, data.color   (arrows and drawn paths, see PathShape)
 ]]
 function Model:NewElement(board, kind, x, y, data)
@@ -97,6 +97,34 @@ function Model:PathShape(points)
 		pts[#pts + 1] = math.floor((clamp01(points[i][2]) - y) * self.PATH_UNITS + 0.5)
 	end
 	return x, y, pts
+end
+
+--[[
+Text on a slide is one line of plain text, starting at the element's position.
+A pipe is how the client spells a colour, a texture or a link, so none survive,
+whether typed or in a pack somebody else made, and neither does anything that
+would start a new line. The cap counts letters rather than bytes, and never
+cuts one in half.
+]]
+Model.TEXT_LETTERS = 50
+
+function Model:CleanText(text)
+	if type(text) ~= "string" then return "" end
+	text = text:gsub("|", ""):gsub("%c", " ")
+	text = text:match("^%s*(.-)%s*$")
+
+	local letters = 0
+	for i = 1, #text do
+		local byte = text:byte(i)
+		-- Every byte but the continuation bytes of UTF-8 starts a letter.
+		if byte < 0x80 or byte >= 0xC0 then
+			letters = letters + 1
+			if letters > self.TEXT_LETTERS then
+				return (text:sub(1, i - 1):match("^(.-)%s*$"))
+			end
+		end
+	end
+	return text
 end
 
 local function indexOf(list, item)
@@ -163,6 +191,26 @@ function Model:RemoveElement(slide, element)
 		desc = "Remove " .. element.kind,
 		undo = function() table.insert(slide.elements, index, element) end,
 		redo = function() table.remove(slide.elements, indexOf(slide.elements, element)) end,
+	})
+
+	Model:Touch()
+	ns.Events:Fire("ELEMENTS_CHANGED")
+end
+
+-- Called once typing ends, not per key, so an edit is one step to undo and
+-- one change to publish. Typed away to nothing, the text is deleted.
+function Model:SetText(slide, element, text)
+	text = self:CleanText(text)
+	if text == "" then return self:RemoveElement(slide, element) end
+
+	local previous = element.data.text
+	if text == previous then return end
+	element.data.text = text
+
+	ns.History:Push({
+		desc = "Edit text",
+		undo = function() element.data.text = previous end,
+		redo = function() element.data.text = text end,
 	})
 
 	Model:Touch()

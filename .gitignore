@@ -1,5 +1,8 @@
 tools/cache/
 tools/scratch/
+# mapdata.py's per-build output: kept locally to diff the next build against
+tools/snapshots/
+tools/reports/
 __pycache__/
 .release/
 .env
