@@ -161,6 +161,12 @@ def test_forever():
     d = under and C.Resolve(C, under.art)
     check(d is not None and lua_list(d.textures) == ["Interface\\AddOns\\RaidMap\\Art\\DalaranUnderbelly"]
           and (d.contentW, d.contentH) == (797, 563), "Dalaran's Underbelly is the image the addon ships")
+    thanes = C.Find(C, "inst:hallofthanes:1")
+    d = thanes and C.Resolve(C, thanes.art)
+    ids = lua_list(d.textures) if d else []
+    check(d is not None and thanes.name == "The Hall of Thanes" and (d.cols, d.rows) == (2, 3) and len(ids) == 6
+          and all(isinstance(i, int) for i in ids) and (d.offsetX, d.offsetY) == (249, 408),
+          "the Hall of Thanes, with no art folder, is a window onto a 2x3 block of its minimap tiles")
     check(C.Find(C, "blacktemple") is not None, "legacy key 'blacktemple' resolves")
     check(C.DefaultKey(C) == "blank", "new slides default to the blank canvas on Forever")
 
@@ -201,6 +207,7 @@ def test_anniversary():
     hs = C.Find(C, "inst:hyjalsummit:0")
     check(hs is not None and "cotmounthyjal" in hs.art.base, "Hyjal Summit uses the Caverns of Time raid art")
     check(C.Find(C, "inst:dalaran:1") is None, "Dalaran's minimap floor is not offered on a client without the dungeon")
+    check(C.Find(C, "inst:hallofthanes:1") is None, "nor is the Hall of Thanes")
 
     for legacy, expect in (("blacktemple", "blacktemple\\blacktemple"), ("sunwell", "sunwellplateau"),
                            ("zulaman", "zulaman"), ("zulgurub", "zulgurub"), ("ruinsofaq", "ruinsofahnqiraj")):

@@ -108,13 +108,14 @@ function Catalog:GetInstances()
 			local found = {}
 			for _, f in ipairs(alt.floors) do
 				local n = f[1]
-				local base = n == 0 and alt.path or (alt.path .. n .. "_")
 				-- A file ID cannot be probed the way a path can, so a floor
 				-- listed by file ID is trusted on the instance's own clients.
-				local present
+				-- Such an alt may have no path at all.
+				local base, present
 				if f.files then
 					present = inst.flavors[ns.FLAVOR]
 				else
+					base = n == 0 and alt.path or (alt.path .. n .. "_")
 					present = HasArt(base)
 				end
 				if present then

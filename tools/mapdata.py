@@ -191,6 +191,11 @@ def resolve_curated(curated, art, retail, present, shipped_art, builds):
     problems, notes = [], []
     for inst in curated:
         for alt in inst["alts"]:
+            # An alt without a folder has no drawn art: every floor comes from
+            # its "minimap" or "images".
+            if "folder" not in alt:
+                alt["_floors"] = {}
+                continue
             alt.setdefault("stem", alt["folder"])
             alt["_floors"] = floors_of(art.get(alt["folder"], {}), alt["stem"])
 
@@ -200,7 +205,7 @@ def resolve_curated(curated, art, retail, present, shipped_art, builds):
         inst["_present"] = collections.defaultdict(set)
         ai = 0
         for alt in inst["alts"]:
-            if not alt["_floors"]:
+            if not alt["_floors"] and "folder" in alt:
                 if floors_of(shipped_art.get(alt["folder"], {}), alt["stem"]):
                     problems.append(f"`{inst['key']}`: `{alt['folder']}/{alt['stem']}*` ships, but no client can "
                                     "load it by path (no ManifestInterfaceData row) -- drop the alt")
@@ -269,7 +274,8 @@ def write_lua(curated, sources):
         "-- when they differ from the classic 4, 3, 256, 256, 1002, 668. A floor with",
         "-- files = { ... } is drawn from those instead, row by row: the file IDs of",
         "-- minimap tiles, or art the addon ships. Its dims can end with the x, y in",
-        "-- that block where the map starts.",
+        "-- that block where the map starts. An alt with no path has no drawn art,",
+        "-- only floors like these.",
         "",
         "local ADDON, ns = ...",
         "",
@@ -290,8 +296,10 @@ def write_lua(curated, sources):
         lines.append("\t\talts = {")
         overrides = inst.get("floorNames", {})
         for alt in alts:
-            path = "Interface\\WorldMap\\" + alt["folder"] + "\\" + alt["stem"]
-            lines.append(f"\t\t\t{{ path = {lua_str(path)}, floors = {{")
+            path = ""
+            if "folder" in alt:
+                path = "path = " + lua_str("Interface\\WorldMap\\" + alt["folder"] + "\\" + alt["stem"]) + ", "
+            lines.append(f"\t\t\t{{ {path}floors = {{")
             for f in alt["_out"]:
                 name = overrides.get(str(f["n"]), f["name"])
                 if f["n"] == 0 and not name and len(alt["_out"]) > 1:
@@ -407,7 +415,7 @@ def main():
 
     # Candidate art: folders this build ships that we have never seen before.
     prev = latest_snapshot(args.product, build)
-    curated_folders = {a["folder"] for i in curated for a in i["alts"]}
+    curated_folders = {a["folder"] for i in curated for a in i["alts"] if "folder" in a}
     if prev:
         seen = set(prev["folders"])
         candidates = [f for f in target_art if f not in seen]
