@@ -1,6 +1,7 @@
-## Interface: 20506, 16001
+## Interface: 11509, 20506, 16001
+## AllowLoadGameType: vanilla, tbc, camelot
 ## Title: RaidMap
-## Notes: Raid strategy board - maps, tokens, slides, notes. Type /rm or /raidmap to open it.
+## Notes: Raid strategy boards for Classic Era, TBC Anniversary and WoW Forever. Type /rm or /raidmap to open.
 ## Author: Lavitz Starlove
 ## IconTexture: Interface\AddOns\RaidMap\Art\Icon
 ## SavedVariables: RaidMapDB
@@ -9,7 +10,7 @@
 #@debug@
 # Repository version for the next release. The packager deletes this block
 # and uncomments the next, so a release carries its tag.
-## Version: 1.1.0
+## Version: 1.2.0
 #@end-debug@
 #@non-debug@
 # ## Version: @project-version@
@@ -27,11 +28,13 @@ Libs\LibDeflate\LibDeflate.lua
 
 Core\Init.lua
 Data\Instances.lua
+Data\BossRooms.lua
 Core\Catalog.lua
 Core\Census.lua
 Core\Roster.lua
 Core\Serialize.lua
 Core\Comm.lua
+Core\Presence.lua
 Model\Board.lua
 Model\Pack.lua
 Render\MapCanvas.lua
@@ -43,6 +46,7 @@ UI\PlaceDrag.lua
 UI\Draw.lua
 UI\Text.lua
 UI\RosterPanel.lua
+UI\GroupStatus.lua
 UI\Filmstrip.lua
 UI\NotesPanel.lua
 UI\MainFrame.lua

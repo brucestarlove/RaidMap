@@ -175,14 +175,14 @@ end })
 function LibDD:UIDropDownMenu_SetText(dropdown, text) dropdown._text = text end
 function LibDD:UIDropDownMenu_Initialize(dropdown, build) dropdown.build = build end
 function LibDD:UIDropDownMenu_AddButton(info) menu[#menu + 1] = info.text picks[info.text] = info.func end
-function menuOf(dropdown)
+function menuOf(dropdown, level, menuList)
     menu, picks = {}, {}
-    dropdown.build(dropdown, 1)
+    dropdown.build(dropdown, level or 1, menuList)
     return table.concat(menu, " / ")
 end
 -- Choosing an entry of a dropdown's menu, by what it says.
-function pick(dropdown, text)
-    menuOf(dropdown)
+function pick(dropdown, text, level, menuList)
+    menuOf(dropdown, level, menuList)
     picks[text]()
 end
 -- A menu put up in one go is kept whole, with where and how it was put up.
@@ -443,6 +443,21 @@ def test_client(label, flavor_setup, author):
     check(ev("last().data.index") == 3, "a drag that was abandoned does not use up a number")
     lua.execute("ns.History:Undo()")
     check(ev("#elements()") == 3, "a dragged token undoes like any other")
+    lua.execute("advance(0.1) click(window.roleStyle) click(palette[9])")
+    check(ev("last().data.numbered == false and last().data.index == nil")
+          and ev("ns.TokenLayer.pool[4].label:GetText() == ''"),
+          "Plain places an icon without a label alongside the numbered assignments")
+    lua.execute("advance(0.1) drag(palette[9], 'canvas', 0.4, 0.4)")
+    check(ev("ghost.caption == '' and last().data.numbered == false"), "a plain role drag has no numbered ghost")
+    lua.execute("click(window.roleStyle) advance(0.1) click(palette[9])")
+    check(ev("last().data.index == 3 and last().data.numbered ~= false"),
+          "switching back continues at T3; plain icons do not consume assignment numbers")
+    lua.execute("""
+        local copy = ns.Serialize:UnpackFromExport(ns.Serialize:PackForExport(ns:CurrentPack()))
+        plainSurvives = copy.boards[copy.currentBoard].slides[1].elements[4].data.numbered == false
+        ns.History:Undo() ns.History:Undo() ns.History:Undo()
+    """)
+    check(ev("plainSurvives"), "export/import preserves the plain token's style")
 
     print("  -- roster")
     lua.execute("roster:SetHeight(498) ns.db.profile.demoRoster = true ns.Roster:Build()")
@@ -964,7 +979,10 @@ def test_client(label, flavor_setup, author):
         ns.SwitchSlide(3)
 
         function editing() return pack.currentBoard .. "/" .. ns:CurrentBoard().currentSlide end
-        function presenting() return present.boardButton:GetText() .. " " .. present.slideButton:GetText():match("^%d+/%d+") end
+        function presenting()
+            local label = present.slideButton:GetText()
+            return label:match("^(.-)  |  ") .. " " .. label:match("%d+/%d+")
+        end
         function hinted()
             local n = 0
             for _, line in ipairs(printed) do
@@ -1000,7 +1018,7 @@ def test_client(label, flavor_setup, author):
     check((ev("presenting()"), ev("editing()")) == ("New Board 2/3", "1/2")
           and ev("#focusSent == 2 and focusSent[1] == '1 ' .. first.id and focusSent[2] == '2 ' .. first.id"),
           f"the present window's slide menu and arrows move it, and tell the group where it went ({ev('focusSent[2]')})")
-    lua.execute("pick(RaidMapPresentBoardMenu, other.name)")
+    lua.execute("pick(RaidMapPresentSlideMenu, other.name, 2, 'boards')")
     check((ev("presenting()"), ev("editing()"), ev("focusSent[3] == '1 ' .. other.id")) == ("Board 2 1/1", "1/2", True)
           and ev("present.tokens.slide == other.slides[1] and present.tokens.board == other"),
           "its board menu takes the group to another board's first slide, and the editor stays on its own")
@@ -1017,6 +1035,9 @@ def test_client(label, flavor_setup, author):
     lua.execute("hear(3, first)")
     check(ev("hinted()") == 1, "once")
     lua.execute("present:Show()")
+    check(ev("present.title == nil and present.boardButton == nil and present.status == nil")
+          and ev("present.closeButton ~= nil and present.canvas._points[1][5] == -26"),
+          "Present mode has only its close button above the map, with navigation below it")
     check((ev("presenting()"), ev("editing()")) == ("New Board 3/3", "1/2"), "and opening it lands where the presenter is")
 
     lua.execute("group.party, group.raid = false, true click(present.prev)")
@@ -1173,8 +1194,98 @@ def test_client(label, flavor_setup, author):
     check(not errors, f"nothing reported a failure along the way {errors or ''}")
 
 
+def test_boss_rooms_and_status(label, flavor_setup):
+    print(f"\n{label}: boss rooms and group status")
+    lua = client(flavor_setup)
+    lua.execute(HELPERS)
+    ev = lua.eval
+    lua.execute("""
+        canvas:SetSize(600, 400)
+        ns.VERSION = '1.2.0'
+        C_Map.GetMapInfo = function(id)
+            if id == 1944 or id == 1948 then
+                return { name = id == 1944 and 'Hellfire Peninsula' or 'Shadowmoon Valley', mapType = 3, parentMapID = 0 }
+            end
+        end
+        C_Map.GetMapArtLayers = function(id)
+            if id == 1944 or id == 1948 then
+                return { { layerWidth = 1002, layerHeight = 668, tileWidth = 256, tileHeight = 256 } }
+            end
+        end
+        C_Map.GetMapArtLayerTextures = function() return { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 } end
+    """)
+    check(ev("menuOf(window.mapDropdown):find('TBC boss rooms', 1, true) ~= nil") == (label == "Anniversary"),
+          "the TBC boss picker is offered only on Anniversary")
+    if label == "Anniversary":
+        lua.execute("""
+            room = ns.BossRoomsByKey['tbc:kz_moroes']
+            beforeRoom = ns:CurrentBoard().rev
+            pick(window.mapDropdown, room.name, 3, { bossesOf = ns.BossRooms[1] })
+            saved = ns:CurrentBoard().slides[1]
+        """)
+        check(ev("saved.mapKey == 'inst:karazhan:3' and saved.bossRoom == room.key")
+              and abs(ev("saved.view.cx") - 345 / 1002) < 1e-9
+              and abs(ev("saved.view.cy") - 435 / 668) < 1e-9
+              and abs(ev("saved.view.zoom") - 1002 / 380) < 1e-9,
+              "choosing Moroes loads his floor and frames his room")
+        check(ev("window.mapDropdown:GetText() == 'Moroes' and ns:CurrentBoard().rev > (beforeRoom or 0)"),
+              "the picker shows the boss name and framing is a publishable edit")
+        lua.execute("click(strip.copyButton) copied = ns:CurrentBoard().slides[2]")
+        check(ev("copied.bossRoom == saved.bossRoom and copied.view.cx == saved.view.cx and copied.view.zoom == saved.view.zoom"),
+              "copying the phase preserves its boss preset and framing")
+        lua.execute("click(strip.addButton) added = ns:CurrentBoard().slides[3]")
+        check(ev("added.bossRoom == saved.bossRoom and added.view.cx == saved.view.cx and added.view.zoom == saved.view.zoom"),
+              "a new phase in a boss room keeps that room's framing")
+        lua.execute("""
+            local raid = ns.BossRooms[10]
+            pick(window.mapDropdown, 'Doom Lord Kazzak', 3, { bossesOf = raid })
+            worldBoss = ns:CurrentBoard().slides[3]
+        """)
+        check(ev("worldBoss.mapKey == 'uimap:1944' and worldBoss.bossRoom == 'tbc:wb_kazzak'"),
+              "world boss presets use the existing Outland zone maps")
+        lua.execute("pick(window.mapDropdown, 'Blank Canvas')")
+        check(ev("worldBoss.bossRoom == nil and window.mapDropdown:GetText() == 'Blank Canvas'"),
+              "choosing a normal map clears the boss preset")
+
+    lua.execute("""
+        group.raid, group.party = true, false
+        function GetNumGroupMembers() return 3 end
+        function UnitFullName(unit)
+            local index = unit == 'player' and 1 or tonumber(unit:match('raid(%d+)'))
+            if index == 1 then return NAME, SURNAME or REALM end
+            if index == 2 then return 'Bek', SURNAME and 'Brook' or REALM end
+            if index == 3 then return 'Cid', SURNAME and 'Marsh' or REALM end
+        end
+        function UnitIsConnected() return true end
+        if SURNAME then UnitNameUnmodified = UnitFullName end
+        ns.db.profile.demoRoster = true
+        local suffix = SURNAME and 'Brook' or REALM
+        peerName = 'Bek-' .. suffix
+        local uid = ns:CurrentPack().uid
+        ns.Comm:ReceivePresence('1.1.0' .. string.char(2) .. '1' .. string.char(2) .. uid, peerName, 'RAID')
+        click(window.groupStatusButton)
+        status = RaidMapGroupStatusFrame
+    """)
+    check(ev("window.groupStatusButton:GetText() == 'Present: 1/3  |  1 old'")
+          and ev("status:IsShown() and #status.rows == 3"),
+          "the editor shows viewers and older versions using actual members, excluding demo raiders")
+    check(ev("status.rows[2].state:GetText() == 'This pack' and status.rows[2].version:GetText():find('(old)', 1, true) ~= nil")
+          and ev("status.rows[3].state:GetText() == 'No reply'"),
+          "the detail panel identifies an old viewer and keeps silent clients unknown")
+    lua.execute("ns.ShowPresentation()")
+    check(ev("window.groupStatusButton:GetText():find('Present: 2/3', 1, true) ~= nil"),
+          "opening our own Present mode immediately increases the viewer count")
+    lua.execute("RaidMapPresentFrame.closeButton.scripts.OnClick()")
+    check(ev("window.groupStatusButton:GetText():find('Present: 1/3', 1, true) ~= nil"),
+          "its close button immediately removes us from the viewer count")
+
+
 if __name__ == "__main__":
     test_client("Anniversary", test_compat.ANNIVERSARY, "Aeva-Starlove")
     test_client("WoW Forever", FOREVER, "Aeva Starlove")
+    era = test_compat.ANNIVERSARY + "\nWOW_PROJECT_ID = WOW_PROJECT_CLASSIC\nfunction GetBuildInfo() return '1.15.9', '70003', '', 11509 end\n"
+    test_client("Classic Era", era, "Aeva-Starlove")
+    for label, setup in (("Anniversary", test_compat.ANNIVERSARY), ("WoW Forever", FOREVER), ("Classic Era", era)):
+        test_boss_rooms_and_status(label, setup)
     print(f"\n{len(failures)} failure(s)")
     sys.exit(1 if failures else 0)

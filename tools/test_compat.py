@@ -108,6 +108,10 @@ def test_init():
     check(lua.eval("ns.FLAVOR") == "tbc", "Anniversary (interface 20506) -> tbc")
     lua = runtime('function GetBuildInfo() return "1.15.9", "1", "", 11509 end', ["Core/Init.lua"])
     check(lua.eval("ns.FLAVOR") == "vanilla", "Classic Era (11509) -> vanilla")
+    lua = runtime('function GetBuildInfo() return "1.60.1", "1", "", 16001 end', ["Core/Init.lua"])
+    check(lua.eval("ns.FLAVOR") == "forever", "Forever without the project constant is detected by its interface")
+    lua = runtime('function GetBuildInfo() return "5.5.4", "1", "", 50504 end', ["Core/Init.lua"])
+    check(lua.eval("ns.FLAVOR") == "unsupported", "progression Classic is not mistaken for a supported client")
 
     lua = runtime(FOREVER, ["Core/Init.lua"])
     ok, err = run(lua, 'ns.RegisterEvents(CreateFrame(), "GROUP_ROSTER_UPDATE", "CHARACTER_POINTS_CHANGED", "TRAIT_CONFIG_UPDATED")')

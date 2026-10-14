@@ -99,6 +99,7 @@ function IsInGroup() return group.raid or group.party end
 function UnitIsGroupLeader() return group.leader end
 function UnitIsGroupAssistant() return group.assist end
 function UnitName() return NAME end
+function GetNumGroupMembers() return 1 end
 function UnitClass() return "Shaman", "SHAMAN" end
 function GetRealmName() return REALM end
 function GetNormalizedRealmName() return (REALM:gsub("[%s%-]", "")) end
@@ -196,7 +197,7 @@ UnitNameUnmodified = UnitName
 function RegionalUniqueNamesEnabled() return true end
 """
 
-FILES = ("Core/Init.lua", "Core/Serialize.lua", "Core/Comm.lua", "Model/Board.lua", "Model/Pack.lua",
+FILES = ("Core/Init.lua", "Core/Serialize.lua", "Core/Comm.lua", "Core/Presence.lua", "Model/Board.lua", "Model/Pack.lua",
          "UI/Transfer.lua")
 
 

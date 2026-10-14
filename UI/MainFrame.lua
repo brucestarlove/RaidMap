@@ -50,7 +50,7 @@ local function RestorePosition()
 	frame:SetPoint(w.point, UIParent, w.relPoint, w.x, w.y)
 end
 
-local function SelectMap(key, skipSave)
+local function SelectMap(key, skipSave, room)
 	local entry = ns.Catalog:Find(key)
 	if not entry then
 		ns:Print("Unknown map '%s'.", tostring(key))
@@ -59,14 +59,16 @@ local function SelectMap(key, skipSave)
 
 	local ok = frame.canvas:SetArt(entry.art)
 	if frame.mapDropdown then
-		LibDD:UIDropDownMenu_SetText(frame.mapDropdown, entry.name)
+		LibDD:UIDropDownMenu_SetText(frame.mapDropdown, room and room.name or entry.name)
 	end
 
 	if not skipSave then
 		local slide = CurrentSlide()
 		slide.mapKey = key
-		slide.view.cx, slide.view.cy, slide.view.zoom = 0.5, 0.5, 1
-		frame.canvas:SetView(0.5, 0.5, 1)
+		slide.bossRoom = room and room.key or nil
+		local view = room and room.view or { 0.5, 0.5, 1 }
+		frame.canvas:SetView(view[1], view[2], view[3])
+		slide.view.cx, slide.view.cy, slide.view.zoom = frame.canvas:GetView()
 		-- An edit like any other: without this a map change never syncs.
 		ns.Model:Touch()
 	end
@@ -122,11 +124,29 @@ local function BuildMapMenu(self, level, menuList)
 		local _, zoneGroups = Catalog:GetZoneGroups()
 		local hasBattlegrounds = zoneGroups.Battlegrounds or #Catalog:GetInstancesOfKind("bg") > 0
 
+		if ns.FLAVOR == "tbc" then AddSubmenu("TBC boss rooms", { bossRooms = true }, level) end
 		if #raids > 0 then AddSubmenu("Raids", { instancesOf = "raid" }, level) end
 		if #dungeons > 0 then AddSubmenu("Dungeons", { instancesOf = "dungeon" }, level) end
 		if hasBattlegrounds then AddSubmenu("Battlegrounds", { battlegrounds = true }, level) end
 		AddSubmenu("Zones", { zones = true }, level)
 		AddMapButton(Catalog.blank.name, Catalog.blank.key, level)
+
+	elseif menuList.bossRooms then
+		for _, raid in ipairs(ns.BossRooms) do
+			AddSubmenu(raid.name, { bossesOf = raid }, level)
+		end
+
+	elseif menuList.bossesOf then
+		for _, room in ipairs(menuList.bossesOf.bosses) do
+			local info = LibDD:UIDropDownMenu_CreateInfo()
+			info.text, info.notCheckable = room.name, true
+			info.disabled = Catalog:Find(room.mapKey) == nil
+			info.func = function()
+				SelectMap(room.mapKey, false, room)
+				LibDD:CloseDropDownMenus()
+			end
+			LibDD:UIDropDownMenu_AddButton(info, level)
+		end
 
 	elseif menuList.instancesOf then
 		for _, inst in ipairs(Catalog:GetInstancesOfKind(menuList.instancesOf)) do
@@ -177,7 +197,7 @@ end
 local function NextRoleIndex(roleKey)
 	local highest = 0
 	for _, element in ipairs(CurrentSlide().elements) do
-		if element.kind == "role" and element.data.role == roleKey then
+		if element.kind == "role" and element.data.role == roleKey and element.data.numbered ~= false then
 			highest = math.max(highest, element.data.index or 0)
 		end
 	end
@@ -188,8 +208,9 @@ local function AddRole(roleKey, x, y)
 	if not x then x, y = frame.canvas:GetView() end
 	local element = ns.Model:NewElement(ns:CurrentBoard(), "role", x, y, {
 		role = roleKey,
-		index = NextRoleIndex(roleKey),
+		index = not ns.db.profile.plainRoles and NextRoleIndex(roleKey) or nil,
 	})
+	if ns.db.profile.plainRoles then element.data.numbered = false end
 	ns.Model:AddElement(CurrentSlide(), element)
 end
 
@@ -291,7 +312,7 @@ local function CreateWindow()
 
 	local title = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	title:SetPoint("LEFT", 4, 0)
-	title:SetText("RaidMap")
+	title:SetText("RaidMap — " .. ns.FLAVOR_NAME)
 
 	local close = CreateFrame("Button", nil, titleBar, "UIPanelCloseButton")
 	close:SetPoint("RIGHT", 2, 0)
@@ -313,6 +334,27 @@ local function CreateWindow()
 	end)
 	bug:SetScript("OnLeave", function() GameTooltip:Hide() end)
 	frame.bugButton = bug
+	local groupStatus = CreateFrame("Button", nil, titleBar, "UIPanelButtonTemplate")
+	groupStatus:SetSize(170, 20)
+	groupStatus:SetPoint("RIGHT", bug, "LEFT", -6, 0)
+	groupStatus:SetScript("OnClick", function() ns.ToggleGroupStatus() end)
+	frame.groupStatusButton = groupStatus
+	local function RefreshGroupStatus()
+		local _, watching, total, _, outdated = ns.Comm:GetGroupStatus()
+		groupStatus:SetText(("Present: %d/%d"):format(watching, total)
+			.. (outdated > 0 and ("  |  %d old"):format(outdated) or ""))
+	end
+	groupStatus:SetScript("OnEnter", function(self)
+		local watching, total, thisPack = ns.Comm:ViewerCount()
+		GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+		GameTooltip:AddLine("Group status")
+		GameTooltip:AddLine(("%d/%d have Present mode open; %d are viewing this pack."):format(watching, total, thisPack), 0.6, 0.6, 0.6)
+		GameTooltip:AddLine("Click for names and addon versions.", 0.6, 0.6, 0.6)
+		GameTooltip:Show()
+	end)
+	groupStatus:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	ns.Events:On("GROUP_STATUS", RefreshGroupStatus)
+	RefreshGroupStatus()
 
 	-- Row 1: pack -> board -> map, narrowing scope left to right.
 	local packDD, boardDD, refreshLibrary = ns.CreateLibraryDropdowns(frame)
@@ -384,18 +426,39 @@ local function CreateWindow()
 		MakePaletteButton(button,
 			function(x, y) AddRole(role.key, x, y) end,
 			function()
-				return ns.RoleLabel(role, NextRoleIndex(role.key)), ns.ROLE_TEXTURE, ns.RoleTexCoords(role.key)
+				return not ns.db.profile.plainRoles and ns.RoleLabel(role, NextRoleIndex(role.key)) or nil,
+					ns.ROLE_TEXTURE, ns.RoleTexCoords(role.key)
 			end)
 
 		button:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_TOP")
 			GameTooltip:AddLine("Add " .. role.label)
 			GameTooltip:AddLine(PALETTE_HINT, 0.6, 0.6, 0.6)
-			GameTooltip:AddLine("Numbered automatically. Travels to anyone who", 0.6, 0.6, 0.6)
-			GameTooltip:AddLine("imports this pack, unlike a player name.", 0.6, 0.6, 0.6)
+			GameTooltip:AddLine(ns.db.profile.plainRoles and "Plain icon, with no assignment number."
+				or "Numbered automatically for individual assignments.", 0.6, 0.6, 0.6)
 			GameTooltip:Show()
 		end)
 	end
+	local roleStyle = CreateFrame("Button", nil, toolbar, "UIPanelButtonTemplate")
+	roleStyle:SetSize(76, 20)
+	roleStyle:SetPoint("LEFT", 8 * 25 + 10 + 3 * 25 + 4, 0)
+	local function RefreshRoleStyle()
+		roleStyle:SetText(ns.db.profile.plainRoles and "Plain" or "Numbered")
+	end
+	roleStyle:SetScript("OnClick", function()
+		ns.db.profile.plainRoles = not ns.db.profile.plainRoles
+		RefreshRoleStyle()
+	end)
+	roleStyle:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:AddLine("Style of new role icons")
+		GameTooltip:AddLine("Click to switch between plain icons and T1/H1/D1 labels.", 0.6, 0.6, 0.6)
+		GameTooltip:AddLine("Existing tokens keep their style; both can share a slide.", 0.6, 0.6, 0.6)
+		GameTooltip:Show()
+	end)
+	roleStyle:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	frame.roleStyle = roleStyle
+	RefreshRoleStyle()
 
 	-- Drawing tools: each arms a left-drag on the map (a click, for Text), and
 	-- stays armed until it is clicked again.
@@ -407,7 +470,7 @@ local function CreateWindow()
 		if lastTool then
 			button:SetPoint("LEFT", lastTool, "RIGHT", 4, 0)
 		else
-			button:SetPoint("LEFT", 8 * 25 + 10 + 3 * 25 + 12, 0)
+			button:SetPoint("LEFT", roleStyle, "RIGHT", 8, 0)
 		end
 		button:SetScript("OnClick", function() ns.Draw:SetTool(tool.key) end)
 		button:SetScript("OnEnter", function(self)
@@ -651,7 +714,7 @@ local function CreateWindow()
 		index = math.max(1, math.min(index, #board.slides))
 		local slide = board.slides[index]
 
-		SelectMap(slide.mapKey, true)
+		SelectMap(slide.mapKey, true, ns.BossRoomsByKey[slide.bossRoom])
 		board.currentSlide = index
 		canvas:SetView(slide.view.cx, slide.view.cy, slide.view.zoom)
 		ns.TokenLayer:SetSlide(slide)

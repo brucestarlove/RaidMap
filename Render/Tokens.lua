@@ -283,10 +283,10 @@ local function StyleRole(token, element)
 	token.icon:SetTexture(ROLE_TEXTURE)
 	token.icon:SetTexCoord(ns.RoleTexCoords(role.key))
 
-	-- The number is the identity of a role token, so it is always drawn.
+	-- Older packs omit numbered and keep their original assignment labels.
 	token.label:ClearAllPoints()
 	token.label:SetPoint("TOP", token.icon, "BOTTOM", 0, -1)
-	token.label:SetText(ns.RoleLabel(role, element.data.index))
+	token.label:SetText(element.data.numbered == false and "" or ns.RoleLabel(role, element.data.index))
 
 	token:SetSize(TOKEN_SIZE, TOKEN_SIZE)
 end

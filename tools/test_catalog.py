@@ -104,7 +104,7 @@ def runtime(build, flavor, version):
         local f = assert(loadstring(src, "@" .. path))
         return f("RaidMap", ns)
     end""")
-    for rel in ("Data/Instances.lua", "Core/Catalog.lua", "Core/Census.lua"):
+    for rel in ("Data/Instances.lua", "Data/BossRooms.lua", "Core/Catalog.lua", "Core/Census.lua"):
         with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
             loader(rel, f.read())
     return lua, world
@@ -245,6 +245,30 @@ def test_anniversary():
     check(at(lua, True, 3065) == "blacktemple", "the Hall of Thanes is not a place on this client")
     d = C.Resolve(C, C.Find(C, "blacktemple").art)
     check(lua_list(d.textures)[0].lower().endswith("blacktemple\\blacktemple1"), "Black Temple page tile path unchanged")
+    rooms = [room for raid in lua_list(lua.globals().ns.BossRooms) for room in lua_list(raid.bosses)]
+    check(len(rooms) == 52 and len({r.key for r in rooms}) == 52, "52 boss room presets with unique keys")
+    missing = [r.mapKey for r in rooms if C.Find(C, r.mapKey) is None]
+    check(not missing, f"every TBC boss preset resolves to art in this build {missing or ''}")
+    check(all(0 < r.view[1] < 1 and 0 < r.view[2] < 1 and 1 <= r.view[3] <= 6 for r in rooms),
+          "all boss preset centers and zooms fit the canvas's supported range")
+
+
+def test_era():
+    build = wago.latest_build("wow_classic_era")
+    print(f"\nClassic Era {build}")
+    lua, world = runtime(build, "vanilla", build)
+    C = lua.globals().ns.Catalog
+    raids = lua_list(C.GetInstancesOfKind(C, "raid"))
+    expected = {"moltencore", "onyxiaslair", "blackwinglair", "zulgurub", "ruinsofahnqiraj", "ahnqiraj", "naxxramas"}
+    check({r.key for r in raids} == expected, "all seven vanilla raids offered; TBC raids excluded")
+    missing = [texture for raid in raids for floor in lua_list(raid.floors)
+               for texture in lua_list(C.Resolve(C, floor.art).textures)
+               if not lua.globals().GetFileIDFromPath(texture)]
+    check(not missing, f"every offered raid tile is in Era's loadable-art manifest {missing[:4] or ''}")
+    zones = lua_list(C.GetZoneMaps(C))
+    check(not any(z.name == "Outland" for z in zones), "Era zone menu contains no Outland map")
+    check(at(lua, True, 409) == "inst:moltencore:1", "a board made inside Molten Core starts on its map")
+    check(at(lua, False) == "blank", "a board made outside an instance starts on the blank canvas")
 
 
 def test_census_roundtrip(lines):
@@ -286,6 +310,7 @@ def test_real_census(sim):
 if __name__ == "__main__":
     lines = test_forever()
     test_anniversary()
+    test_era()
     test_real_census(test_census_roundtrip(lines))
     print(f"\n{len(failures)} failure(s)")
     sys.exit(1 if failures else 0)

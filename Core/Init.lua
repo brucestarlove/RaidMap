@@ -24,12 +24,15 @@ local function DetectFlavor()
 		return "forever"
 	end
 	local interface = select(4, GetBuildInfo())
+	-- Also recognise Forever when a client does not expose the project constant.
+	if interface >= 16000 and interface < 17000 then return "forever" end
 	if interface < 20000 then return "vanilla" end
 	if interface < 30000 then return "tbc" end
-	return "retail"
+	return "unsupported"
 end
 
 ns.FLAVOR = DetectFlavor()
+ns.FLAVOR_NAME = ({ vanilla = "Classic Era", tbc = "TBC Anniversary", forever = "WoW Forever" })[ns.FLAVOR] or "Unsupported client"
 
 -- Registering an event the client does not know is a hard error on the
 -- retail-UI clients, and the two clients disagree on talent/spec events.

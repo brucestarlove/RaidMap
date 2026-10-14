@@ -159,7 +159,7 @@ function Catalog:GetInstancesOfKind(kind)
 	local order = ERA_ORDER[ns.FLAVOR] or {}
 	local list = {}
 	for i, inst in ipairs(self:GetInstances()) do
-		local offered = inst.flavors[ns.FLAVOR] or ns.FLAVOR == "retail"
+		local offered = inst.flavors[ns.FLAVOR]
 		if inst.kind == kind and offered then
 			list[#list + 1] = { inst = inst, rank = order[inst.era] or 9, index = i }
 		end

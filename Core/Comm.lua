@@ -314,7 +314,10 @@ function Comm:NeededBoards(manifest)
 end
 
 function Comm:ReceiveManifest(data, from, sender)
-	local manifest = ns.Serialize:UnpackFromComm(data)
+	local manifest, _, envelope = ns.Serialize:UnpackFromComm(data)
+	if manifest and sender and self.NotePeer then
+		self:NotePeer(sender, envelope and envelope.addonVersion)
+	end
 	if not manifest or not manifest.uid then return end
 
 	local existing = ns.db.profile.packs[manifest.uid]
@@ -523,9 +526,10 @@ function Comm:ReceiveFocus(data, from)
 	ns.Events:Fire("REMOTE_FOCUS", from, index, boardID ~= "" and boardID or nil)
 end
 
-function Comm:ReceiveSpec(data, from)
-	local class, specName, specIcon = strsplit(FIELD, data)
+function Comm:ReceiveSpec(data, from, sender)
+	local class, specName, specIcon, version = strsplit(FIELD, data)
 	if not class or class == "" then return end
+	if sender and self.NotePeer then self:NotePeer(sender, version) end
 
 	ns.Roster.specs[from] = {
 		class = class,
@@ -538,6 +542,7 @@ end
 
 function Comm:OnCommReceived(prefix, message, distribution, sender)
 	if prefix ~= PREFIX then return end
+	if ns.AnySecret(message, distribution, sender) or type(message) ~= "string" or type(sender) ~= "string" then return end
 
 	if isMe(sender) then return end
 
@@ -564,7 +569,11 @@ function Comm:OnCommReceived(prefix, message, distribution, sender)
 	elseif op == OP_FOCUS then
 		self:ReceiveFocus(data, from)
 	elseif op == OP_SPEC then
-		self:ReceiveSpec(data, from)
+		self:ReceiveSpec(data, from, sender)
+	elseif op == "P" and self.ReceivePresence then
+		self:ReceivePresence(data, sender, distribution)
+	elseif op == "Q" and self.SchedulePresence then
+		if distribution == self:Channel() then self:SchedulePresence() end
 	elseif op == OP_SPEC_REQ then
 		self:ScheduleSpecBroadcast(0.5 + math.random() * 4)
 	elseif op == OP_LINK_REQ then
@@ -635,6 +644,7 @@ function Comm:BroadcastSpec()
 		class or "",
 		specName or "",
 		tostring(specIcon or ""),
+		ns.VERSION,
 	}, FIELD), channel)
 end
 

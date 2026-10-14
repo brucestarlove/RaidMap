@@ -137,28 +137,12 @@ local function RefreshNotes()
 	frame.notes.boardTab:SetEnabled(scope ~= "board")
 end
 
-local function RefreshStatus()
-	local pack = ns:CurrentPack()
-	if not pack then return end
-
-	local update = ns.Comm and ns.Comm.lastUpdate
-	if update then
-		frame.status:SetText(("|cff888888%s -- rev %d|r"):format(update.from, pack.revision or 0))
-	else
-		frame.status:SetText(("|cff666666%s -- rev %d|r")
-			:format(ns.Pack.DisplayName(pack.author), pack.revision or 0))
-	end
-end
-
 local function Sync()
 	if not frame or not frame:IsShown() then return end
 
 	local pack = ns:CurrentPack()
 	local slide, index, board = CurrentSlide()
 	if not pack or not board or not slide then return end
-
-	frame.title:SetText(pack.title or "RaidMap")
-	frame.boardButton:SetText(board.name)
 
 	-- Only reload art when the map actually changed: re-resolving the catalog
 	-- and re-laying twelve tiles on every slide step flickers for no reason.
@@ -171,12 +155,12 @@ local function Sync()
 	frame.canvas:SetView(slide.view.cx, slide.view.cy, slide.view.zoom)
 	frame.tokens:SetSlide(slide, board)
 
-	frame.slideButton:SetText(("%d/%d  %s"):format(index, #board.slides, slide.name))
+	frame.slideButton:SetText(("%s  |  %d/%d  %s"):format(board.name, index, #board.slides, slide.name))
 	frame.prev:SetEnabled(index > 1)
 	frame.next:SetEnabled(index < #board.slides)
 
 	RefreshNotes()
-	RefreshStatus()
+	if ns.Comm.BroadcastPresence then ns.Comm:BroadcastPresence() end
 end
 
 -------------------------------------------------------------------- navigation
@@ -206,7 +190,6 @@ end
 
 local function BuildBoardMenu(_, level)
 	level = level or 1
-	if level ~= 1 then return end
 
 	local pack = ns:CurrentPack()
 	local current = CurrentBoard()
@@ -231,8 +214,9 @@ local function BuildBoardMenu(_, level)
 	end
 end
 
-local function BuildSlideMenu(_, level)
+local function BuildSlideMenu(_, level, menuList)
 	level = level or 1
+	if level == 2 and menuList == "boards" then return BuildBoardMenu(nil, level) end
 	if level ~= 1 then return end
 
 	local _, current, board = CurrentSlide()
@@ -253,6 +237,9 @@ local function BuildSlideMenu(_, level)
 		end
 		LibDD:UIDropDownMenu_AddButton(info, level)
 	end
+	info = LibDD:UIDropDownMenu_CreateInfo()
+	info.text, info.notCheckable, info.hasArrow, info.menuList = "Boards", true, true, "boards"
+	LibDD:UIDropDownMenu_AddButton(info, level)
 end
 
 ------------------------------------------------------------------ construction
@@ -352,11 +339,11 @@ local function CreateWindow()
 	end
 	frame:SetClampedToScreen(true)
 
-	-- Title bar
+	-- A narrow drag strip and a close button are the entire header.
 	local titleBar = CreateFrame("Frame", nil, frame)
-	titleBar:SetPoint("TOPLEFT", 6, -6)
-	titleBar:SetPoint("TOPRIGHT", -6, -6)
-	titleBar:SetHeight(20)
+	titleBar:SetPoint("TOPLEFT", 6, -4)
+	titleBar:SetPoint("TOPRIGHT", -6, -4)
+	titleBar:SetHeight(18)
 	titleBar:EnableMouse(true)
 	titleBar:RegisterForDrag("LeftButton")
 	titleBar:SetScript("OnDragStart", function() frame:StartMoving() end)
@@ -365,38 +352,13 @@ local function CreateWindow()
 		SavePosition()
 	end)
 
-	local title = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	title:SetPoint("LEFT", 4, 0)
-	frame.title = title
-
-	local readOnly = titleBar:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	readOnly:SetPoint("LEFT", title, "RIGHT", 6, 0)
-	readOnly:SetText("|cff666666read-only|r")
-
 	local close = CreateFrame("Button", nil, titleBar, "UIPanelCloseButton")
+	close:SetSize(24, 24)
 	close:SetPoint("RIGHT", 2, 0)
 	close:SetScript("OnClick", function() frame:Hide() end)
+	frame.closeButton = close
 
-	-- Header: which board, and who last published it
-	local boardMenu = LibDD:Create_UIDropDownMenu("RaidMapPresentBoardMenu", frame)
-	boardMenu:Hide()
-	LibDD:UIDropDownMenu_Initialize(boardMenu, BuildBoardMenu, "MENU")
-
-	local boardButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-	boardButton:SetSize(150, 20)
-	boardButton:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", 4, -2)
-	boardButton:SetScript("OnClick", function()
-		LibDD:ToggleDropDownMenu(1, nil, boardMenu, "cursor", 0, 0)
-	end)
-	frame.boardButton = boardButton
-
-	-- One anchor, not a left/right pair: two anchors here would take their
-	-- vertical from different frames and conflict.
-	local status = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	status:SetPoint("RIGHT", frame, "TOPRIGHT", -12, -38)
-	status:SetJustifyH("RIGHT")
-	frame.status = status
-
+	-- Board selection lives in the navigation menu below the map.
 	-- Notes strip along the bottom
 	local notes = CreateNotesStrip(frame)
 	notes:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 8)
@@ -434,7 +396,7 @@ local function CreateWindow()
 	end)
 	slideButton:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
-		GameTooltip:AddLine("Jump to a slide")
+		GameTooltip:AddLine("Choose a board or slide")
 		GameTooltip:AddLine("Wheel zooms and right-drag pans the map.", 0.6, 0.6, 0.6)
 		GameTooltip:Show()
 	end)
@@ -448,7 +410,7 @@ local function CreateWindow()
 
 	-- Canvas fills whatever is left between the header and the nav row.
 	local canvas = ns.CreateMapCanvas(frame)
-	canvas:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -52)
+	canvas:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -26)
 	canvas:SetPoint("BOTTOMRIGHT", nav, "TOPRIGHT", 0, 4)
 	frame.canvas = canvas
 
@@ -503,6 +465,7 @@ local function CreateWindow()
 	frame:SetScript("OnHide", function()
 		Settings().shown = false
 		frame.tokens.paused = true
+		if ns.Comm.BroadcastPresence then ns.Comm:BroadcastPresence() end
 	end)
 
 	tinsert(UISpecialFrames, "RaidMapPresentFrame")
@@ -521,6 +484,10 @@ end
 function ns.TogglePresentation()
 	if not frame then CreateWindow() end
 	if frame:IsShown() then frame:Hide() else frame:Show() end
+end
+
+function ns.IsPresentationShown()
+	return frame ~= nil and frame:IsShown()
 end
 
 --[[
@@ -573,9 +540,6 @@ end
 ns.Events:On("SLIDES_CHANGED", Sync)
 ns.Events:On("PACK_CHANGED", Sync)
 ns.Events:On("BOARD_REPLACED", Sync)
-ns.Events:On("SYNC_STATUS", function()
-	if frame and frame:IsShown() then RefreshStatus() end
-end)
 ns.Events:On("REMOTE_FOCUS", Follow)
 
 ns.Events:On("READY", function()

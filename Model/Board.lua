@@ -287,6 +287,7 @@ function Model:AddSlide(board, copyFromIndex)
 	if copyFromIndex and board.slides[copyFromIndex] then
 		local src = board.slides[copyFromIndex]
 		slide = self:NewSlide(src.name .. " (copy)", src.mapKey)
+		slide.bossRoom = src.bossRoom
 		slide.view.cx, slide.view.cy, slide.view.zoom = src.view.cx, src.view.cy, src.view.zoom
 
 		for i, element in ipairs(src.elements) do
@@ -303,6 +304,10 @@ function Model:AddSlide(board, copyFromIndex)
 		-- same room, and the default map is a blank canvas on some clients.
 		local shown = board.slides[board.currentSlide or 1] or board.slides[#board.slides]
 		slide = self:NewSlide("Slide " .. (#board.slides + 1), shown and shown.mapKey)
+		if shown and shown.bossRoom then
+			slide.bossRoom = shown.bossRoom
+			slide.view.cx, slide.view.cy, slide.view.zoom = shown.view.cx, shown.view.cy, shown.view.zoom
+		end
 	end
 
 	table.insert(board.slides, slide)
