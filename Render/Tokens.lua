@@ -102,8 +102,11 @@ end
 
 local LayerMixin = {}
 
-function LayerMixin:SetSlide(slide)
-	self.slide = slide
+-- board is the one the slide is on, for a layer that may not be showing the
+-- editor's: its tokens draw the way their own board says to. Left out, it is
+-- the editor's board.
+function LayerMixin:SetSlide(slide, board)
+	self.slide, self.board = slide, board
 	self:Refresh()
 end
 
@@ -300,7 +303,7 @@ function LayerMixin:Refresh()
 
 	local slide = self.slide
 	local count = slide and #slide.elements or 0
-	local board = ns:CurrentBoard()
+	local board = self.board or ns:CurrentBoard()
 
 	for i = 1, count do
 		local element = slide.elements[i]

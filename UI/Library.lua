@@ -76,29 +76,6 @@ StaticPopupDialogs["RAIDMAP_RENAME_BOARD"] = makeDialog(
 	end
 )
 
---[[
-Changing board is the same kind of act as changing slide, so it broadcasts the
-same way: a lead moving to the next boss carries the raid with them instead of
-leaving twenty-four people staring at the boss that just died. Presentation mode
-routes through here too, where CanPublish is false and it is a purely local view
-change.
-
-There is no fromRemote counterpart to ns.SwitchSlide's here. A received focus
-calls ns.Pack:SelectBoard directly, because Comm sits below UI and must not
-reach up into it.
-]]
-function ns.SelectBoard(index)
-	local pack = ns:CurrentPack()
-	local board = pack and pack.boards[index]
-	if not board then return end
-
-	ns.Pack:SelectBoard(pack, index)
-
-	if ns.Comm and ns.Comm:CanPublish() then
-		ns.Comm:PublishFocus(board.currentSlide or 1, board)
-	end
-end
-
 local function BuildPackMenu(self, level, menuList)
 	level = level or 1
 
@@ -259,7 +236,9 @@ local function BuildBoardMenu(self, level)
 		info.text = board.name
 		info.checked = (i == pack.currentBoard)
 		info.func = function()
-			ns.SelectBoard(i)
+			-- The editor's board, and only that: taking the raid to the next
+			-- boss is done from the Present window.
+			ns.Pack:SelectBoard(pack, i)
 			LibDD:CloseDropDownMenus()
 		end
 		LibDD:UIDropDownMenu_AddButton(info, level)

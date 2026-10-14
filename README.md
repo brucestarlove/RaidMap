@@ -60,13 +60,17 @@ hides it.
   the map and the wheel zooms. Each slide remembers its own framing.
 - **Notes** sit beside the map, per slide or for the whole board.
 - **Present Mode** opens a compact read-only view, which is what raiders want open:
-  it cannot be edited by accident and it follows whoever is presenting.
+  it cannot be edited by accident and it follows whoever is presenting. It is
+  also where you present from: changing slide or board in it moves everyone
+  else's Present Mode window to match. The editor moves nobody and follows
+  nobody, so you can look through a pack, or keep working on one, while
+  someone else presents.
 
 ### Sharing
 
 - **In your raid or party:** the leader and assistants press **Publish**.
-  Everyone with the addon receives the pack, and follows along as the
-  presenter changes slides.
+  Everyone with the addon receives the pack, and with Present Mode open
+  follows along as the presenter changes slides in theirs.
 - **Anywhere else:** the pack menu has **Export string** and **Import
   string** for pasting through Discord, and **Link in chat** for a clickable
   link that fetches the pack from you.

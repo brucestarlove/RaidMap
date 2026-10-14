@@ -4,14 +4,19 @@ local LibDD = LibStub("LibUIDropDownMenu-4.0")
 
 --[[
 Presentation mode -- the read-only view for the twenty-four people who are not
-authoring.
+authoring, and the one place a pack is presented from.
 
-It is a *view over the same model state*, never a copy. Next/prev call the same
-ns.SwitchSlide the editor does, so one code path serves both directions: a lead
-can present from this window and the raid follows over the existing focus
-opcode, and a raider's window tracks the lead with no second mechanism to keep
-in step. Anything that reads its state from somewhere other than the current
-pack would drift the moment an update landed mid-fight.
+It has a place of its own in the current pack: a board and a slide that are
+this window's, not the editor's. Two things move it and nothing else does. Its
+own buttons and menus do, and for anyone who may publish that is presenting:
+the move goes out to the group as a focus. And a focus that comes in from
+somebody else presenting does. The editor is on neither end of that. It sends
+no focus and follows none, so paging through a pack to work on it moves
+nobody's view, and a presenter cannot pull an author off the slide in front of
+them.
+
+What it draws is still the pack's own boards and slides, never a copy of them,
+so an edit or an update that lands mid-fight is on screen as soon as it does.
 
 Read-only is structural rather than a matter of leaving buttons out:
 
@@ -23,9 +28,6 @@ Read-only is structural rather than a matter of leaving buttons out:
     bump a revision;
   - notes are a FontString, not an edit box. An edit box that takes focus eats
     the movement keys, which is a bad thing to hand somebody mid-fight.
-
-The board menu is the one control that changes shared state, and only because
-ns.SelectBoard broadcasts nothing unless you have publish rights.
 ]]
 
 local BACKDROP_TEMPLATE = BackdropTemplateMixin and "BackdropTemplate" or nil
@@ -43,61 +45,39 @@ local NAV_HEIGHT = 22
 local frame
 local hintShown = false
 
+-- Where this window is: { board = <board id>, slide = <index> }. Nothing until
+-- it is first asked for, and this session's only.
+local place
+
 ------------------------------------------------------------------- state reads
 
-local function CurrentSlide()
-	local board = ns:CurrentBoard()
-	if not board then return nil end
-	local index = math.max(1, math.min(board.currentSlide or 1, #board.slides))
-	return board.slides[index], index, board
-end
-
-------------------------------------------------------------------------- menus
-
-local function BuildBoardMenu(_, level)
-	level = level or 1
-	if level ~= 1 then return end
-
+--[[
+The board this window is on. With no place yet it starts where the editor is,
+which is what someone opening it from the editor expects to see. It goes back
+there too when its board is no longer in the current pack: deleted, or the pack
+was changed, which the Pack menu does for both windows.
+]]
+local function CurrentBoard()
 	local pack = ns:CurrentPack()
-	if not pack then return end
+	if not pack then return nil end
 
-	local info = LibDD:UIDropDownMenu_CreateInfo()
-	info.text, info.isTitle, info.notCheckable = "Boards", true, true
-	LibDD:UIDropDownMenu_AddButton(info, level)
-
-	for i, board in ipairs(pack.boards) do
-		info = LibDD:UIDropDownMenu_CreateInfo()
-		info.text = board.name
-		info.checked = (i == pack.currentBoard)
-		info.func = function()
-			ns.SelectBoard(i)
-			LibDD:CloseDropDownMenus()
+	if place then
+		for _, board in ipairs(pack.boards) do
+			if board.id == place.board then return board end
 		end
-		LibDD:UIDropDownMenu_AddButton(info, level)
 	end
+
+	local board = ns:CurrentBoard()
+	place = { board = board.id, slide = board.currentSlide or 1 }
+	return board
 end
 
-local function BuildSlideMenu(_, level)
-	level = level or 1
-	if level ~= 1 then return end
-
-	local _, current, board = CurrentSlide()
-	if not board then return end
-
-	local info = LibDD:UIDropDownMenu_CreateInfo()
-	info.text, info.isTitle, info.notCheckable = board.name, true, true
-	LibDD:UIDropDownMenu_AddButton(info, level)
-
-	for i, slide in ipairs(board.slides) do
-		info = LibDD:UIDropDownMenu_CreateInfo()
-		info.text = ("%d. %s"):format(i, slide.name)
-		info.checked = (i == current)
-		info.func = function()
-			ns.SwitchSlide(i)
-			LibDD:CloseDropDownMenus()
-		end
-		LibDD:UIDropDownMenu_AddButton(info, level)
-	end
+-- Clamped on the way out: a slide can be deleted from under the place.
+local function CurrentSlide()
+	local board = CurrentBoard()
+	if not board then return nil end
+	local index = math.max(1, math.min(place.slide or 1, #board.slides))
+	return board.slides[index], index, board
 end
 
 ------------------------------------------------------------------- persistence
@@ -189,7 +169,7 @@ local function Sync()
 	end
 
 	frame.canvas:SetView(slide.view.cx, slide.view.cy, slide.view.zoom)
-	frame.tokens:SetSlide(slide)
+	frame.tokens:SetSlide(slide, board)
 
 	frame.slideButton:SetText(("%d/%d  %s"):format(index, #board.slides, slide.name))
 	frame.prev:SetEnabled(index > 1)
@@ -199,6 +179,19 @@ local function Sync()
 	RefreshStatus()
 end
 
+-------------------------------------------------------------------- navigation
+
+-- A move made in this window. For anyone who may publish that is presenting,
+-- and it goes out to the group; for everyone else it is silently local.
+local function Go(board, index)
+	index = math.max(1, math.min(index, #board.slides))
+	place = { board = board.id, slide = index }
+
+	if ns.Comm:CanPublish() then ns.Comm:PublishFocus(index, board) end
+
+	Sync()
+end
+
 local function Step(delta)
 	local _, index, board = CurrentSlide()
 	if not board then return end
@@ -206,9 +199,60 @@ local function Step(delta)
 	local target = index + delta
 	if target < 1 or target > #board.slides then return end
 
-	-- Not fromRemote: presenting from this window should drive the raid for
-	-- anyone who has the rights, and is silently local for everyone else.
-	ns.SwitchSlide(target)
+	Go(board, target)
+end
+
+------------------------------------------------------------------------- menus
+
+local function BuildBoardMenu(_, level)
+	level = level or 1
+	if level ~= 1 then return end
+
+	local pack = ns:CurrentPack()
+	local current = CurrentBoard()
+	if not pack or not current then return end
+
+	local info = LibDD:UIDropDownMenu_CreateInfo()
+	info.text, info.isTitle, info.notCheckable = "Boards", true, true
+	LibDD:UIDropDownMenu_AddButton(info, level)
+
+	for i, board in ipairs(pack.boards) do
+		info = LibDD:UIDropDownMenu_CreateInfo()
+		info.text = board.name
+		info.checked = (board == current)
+		info.func = function()
+			-- From its first slide: the next boss is presented from the top,
+			-- not from wherever the editor was last left on it.
+			local chosen = ns:CurrentPack().boards[i]
+			if chosen then Go(chosen, 1) end
+			LibDD:CloseDropDownMenus()
+		end
+		LibDD:UIDropDownMenu_AddButton(info, level)
+	end
+end
+
+local function BuildSlideMenu(_, level)
+	level = level or 1
+	if level ~= 1 then return end
+
+	local _, current, board = CurrentSlide()
+	if not board then return end
+
+	local info = LibDD:UIDropDownMenu_CreateInfo()
+	info.text, info.isTitle, info.notCheckable = board.name, true, true
+	LibDD:UIDropDownMenu_AddButton(info, level)
+
+	for i, slide in ipairs(board.slides) do
+		info = LibDD:UIDropDownMenu_CreateInfo()
+		info.text = ("%d. %s"):format(i, slide.name)
+		info.checked = (i == current)
+		info.func = function()
+			local _, _, shown = CurrentSlide()
+			if shown then Go(shown, i) end
+			LibDD:CloseDropDownMenus()
+		end
+		LibDD:UIDropDownMenu_AddButton(info, level)
+	end
 end
 
 ------------------------------------------------------------------ construction
@@ -480,33 +524,59 @@ function ns.TogglePresentation()
 end
 
 --[[
-Somebody is driving the raid's view and this player has nothing open to see it
-in. Said once per session, and only to someone with both windows shut: the shown
-flag persists, so anyone who opens this even once gets it back on the next login
-and never sees the hint again.
+Somebody is presenting and this player does not have the window that shows it
+open. The editor being open is no reason to keep quiet: it does not follow.
+Said once per session. The shown flag persists, so anyone who opens this even
+once gets it back on the next login and never sees the hint again.
 ]]
 local function NotifyPresenting(from)
 	if hintShown then return end
 	if frame and frame:IsShown() then return end
-	if ns.IsMainShown and ns.IsMainShown() then return end
 
 	hintShown = true
 	ns:Print("%s is presenting. Type |cffffd100/rm present|r to follow along.",
 		from or "Someone")
 end
 
+--[[
+Somebody presenting has moved. Follow the board too, when we hold it. A board we
+do not recognise means they are on a pack we do not have open; moving the slide
+anyway is the closest useful thing we can do.
+
+The place moves whether or not the window is up, so that opening it lands where
+the presenter is.
+]]
+local function Follow(from, index, boardID)
+	local board = CurrentBoard()
+	if not board then return end
+
+	if boardID then
+		for _, candidate in ipairs(ns:CurrentPack().boards) do
+			if candidate.id == boardID then
+				board = candidate
+				break
+			end
+		end
+	end
+
+	place = { board = board.id, slide = math.max(1, math.min(index, #board.slides)) }
+
+	Sync()
+	NotifyPresenting(from)
+end
+
 ------------------------------------------------------------------------ wiring
 
--- SLIDE_SHOWN is fired by ns.SwitchSlide, so this tracks the lead's focus, the
--- editor's filmstrip and its own buttons through one path.
-ns.Events:On("SLIDE_SHOWN", Sync)
+-- What is on the slide can change under this window, from an edit in the
+-- editor beside it or an update arriving, and it redraws for those. Which
+-- slide the editor is on is not something it hears about.
 ns.Events:On("SLIDES_CHANGED", Sync)
 ns.Events:On("PACK_CHANGED", Sync)
 ns.Events:On("BOARD_REPLACED", Sync)
 ns.Events:On("SYNC_STATUS", function()
 	if frame and frame:IsShown() then RefreshStatus() end
 end)
-ns.Events:On("REMOTE_FOCUS", NotifyPresenting)
+ns.Events:On("REMOTE_FOCUS", Follow)
 
 ns.Events:On("READY", function()
 	if ns.db.profile.present.shown then ns.ShowPresentation() end

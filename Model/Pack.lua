@@ -283,16 +283,25 @@ local HISTORY_DEPTH = 10
 Snapshots are the already-compressed transport blob, so keeping ten of them
 costs about what one pack costs. This is the answer to "a malicious or confused
 assistant published garbage": roll back and republish.
-]]
-function Pack:PushHistory(pack)
-	pack.history = pack.history or {}
 
-	-- The blob must not contain the history, or each snapshot would embed every
-	-- snapshot before it and the pack would grow geometrically.
-	local saved = pack.history
-	pack.history = nil
-	local blob = ns.Serialize:PackForExport(pack, "pack")
-	pack.history = saved
+The blob must not contain the history, or each snapshot would embed every
+snapshot before it and the pack would grow geometrically. It is left out of a
+copy one level deep, not taken off the pack and put back: a serializer that
+fails in between would leave the pack without its history for good.
+]]
+function Pack:Snapshot(pack)
+	local bare = {}
+	for key, value in pairs(pack) do
+		if key ~= "history" then bare[key] = value end
+	end
+	return ns.Serialize:PackForExport(bare, "pack")
+end
+
+-- blob is a snapshot already taken, by a caller that had to know it could be
+-- before going any further.
+function Pack:PushHistory(pack, blob)
+	blob = blob or self:Snapshot(pack)
+	pack.history = pack.history or {}
 
 	table.insert(pack.history, 1, {
 		rev = pack.revision,

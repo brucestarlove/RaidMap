@@ -1,6 +1,8 @@
 local ADDON, ns = ...
 
-local LibSerialize = LibStub("LibSerialize")
+-- RaidMap's own copy, under its own name (see the top of that file): what two
+-- clients say to each other must not depend on which other addons each has.
+local LibSerialize = LibStub("RaidMap-LibSerialize")
 local LibDeflate = LibStub("LibDeflate")
 
 --[[

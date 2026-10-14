@@ -37,6 +37,9 @@ date = os.date
 function GetBuildInfo() return "2.5.6", "69795", "", 20506 end
 printed = {}
 function print(...) printed[#printed + 1] = tostring((...)) end
+-- What the addon hands on to the client's error handler, kept to be read back.
+errors = {}
+function geterrorhandler() return function(msg) errors[#errors + 1] = tostring(msg) end end
 
 timers = {}
 local function after(delay, fn) timers[#timers + 1] = { at = now + delay, fn = fn } end
@@ -151,7 +154,6 @@ end
 HELPERS = r"""
 ns.Catalog = { DefaultKey = function() return "blank" end }
 ns.Roster = { specs = {}, Build = function() end, GetPlayerSpec = function() end }
-function ns.SwitchSlide(index) shownSlide = index end
 
 function slideOf(boardIndex)
     local pack = ns:CurrentPack()
@@ -205,7 +207,7 @@ def check(cond, msg):
 
 
 class Client:
-    def __init__(self, world, name, realm, surname=None):
+    def __init__(self, world, name, realm, surname=None, loaded_first=None):
         self.world, self.name, self.realm, self.surname = world, name, realm, surname
         self.label = f"{name} {surname}" if surname else name
         self.online = True
@@ -229,7 +231,10 @@ class Client:
                 load(rel, f.read())
 
         self.lua.execute("ns = {}")
-        for lib in ("Libs/LibStub/LibStub.lua", "Libs/LibSerialize/LibSerialize.lua", "Libs/LibDeflate/LibDeflate.lua"):
+        run_file("Libs/LibStub/LibStub.lua")
+        if loaded_first:   # what an addon that loads before RaidMap has registered by then
+            self.lua.execute(loaded_first)
+        for lib in ("Libs/LibSerialize/LibSerialize.lua", "Libs/LibDeflate/LibDeflate.lua"):
             run_file(lib)
         self.lua.execute(FAKE_LIBS)
         for rel in FILES:
@@ -266,8 +271,8 @@ class World:
         self.realm, self.clients, self.queue, self.log = realm, [], [], []
         self.sender_sep = sender_sep
 
-    def join(self, name, surname=None, **flags):
-        c = Client(self, name, self.realm, surname)
+    def join(self, name, surname=None, loaded_first=None, **flags):
+        c = Client(self, name, self.realm, surname, loaded_first)
         c.group(**flags)
         self.clients.append(c)
         return c
@@ -460,6 +465,104 @@ def test_party():
     check(same(uid, x, z), "someone who joins later is sent the published pack without anyone acting")
 
 
+# Another addon's copy of LibSerialize, as LibStub would hand it to anyone who
+# asked for the shared name. DBM-Core 12.1 ships r6, which in the game raises
+# this for any number that is 0, so it could write no pack with one in it.
+OTHER_SERIALIZER = r"""
+local other = LibStub:NewLibrary("LibSerialize", 6)
+function other:Serialize() error("Division by zero") end
+function other:Deserialize() return false end
+"""
+
+
+def test_other_addons():
+    print("\nA newer LibSerialize from another addon")
+    w = World()
+    x = w.join("Xan", party=True, loaded_first=OTHER_SERIALIZER)   # one that loads before RaidMap, as DBM-Core does
+    y = w.join("Yul", party=True)
+    y.do(OTHER_SERIALIZER)                                         # and one that loads after it
+    x.do("ns.Comm:PublishPack()")
+    w.run()
+    uid = x.get("ns:CurrentPack().uid")
+    check(x.get("ns:CurrentBoard().nextID") == 0 and same(uid, x, y),
+          "with one loaded first, a pack is still published, a 0 in it and all")
+    y.do("addMarker(1, 0, 1); ns.Comm:PublishPack()")
+    w.run()
+    check(same(y.get("ns:CurrentPack().uid"), y, x), "and with one loaded afterwards")
+    x.do('copy = ns.Serialize:UnpackFromExport(ns.Pack:Snapshot(ns:CurrentPack()))')
+    check(x.get("copy.uid") == uid and x.get("#errors") == 0 and y.get("#errors") == 0,
+          "export strings are written and read by RaidMap's own copy too")
+
+
+def test_failed_publish():
+    print("\nA publish that fails")
+    w = World()
+    x = w.join("Xan", party=True)
+    y = w.join("Yul", party=True)
+    x.do("addMarker(1); ns.Comm:PublishPack()")
+    w.run()
+    uid = x.get("ns:CurrentPack().uid")
+
+    mark = len(w.log)
+    x.do("""
+        local pack = ns:CurrentPack()
+        function state()
+            return ("rev %d, published %d, %d in history, %s"):format(pack.revision, pack.lastPublishedAt,
+                pack.history and #pack.history or -1, pack.modified and "modified" or "clean")
+        end
+        addMarker(1, 0.3, 0.3)
+        before = state()
+        local real = ns.Serialize.PackForExport
+        ns.Serialize.PackForExport = function() error("Division by zero") end
+        for press = 1, 3 do ns.Comm:PublishPack() end
+        ns.Serialize.PackForExport = real
+    """)
+    w.run()
+    check(x.get("state()") == x.get("before") and x.get("before") == "rev 2, published 1791000000, 1 in history, modified",
+          f"leaves the pack as it was: its revision, when it was published, its history ({x.get('state()')})")
+    check(not w.sent(mark, "M") and x.said("Could not publish") and x.get("#errors") == 3
+          and "Division by zero" in x.get("errors[1]"),
+          "sends nothing, says so, and still hands the error to the client")
+
+    y.do(f'ns.Pack:Select("{uid}"); addMarker(1, 0.6, 0.6); ns.Comm:PublishPack()')
+    w.run()
+    check(same(uid, x, y) and x.get(f'ns.db.profile.packs["{uid}"].revision') == 3,
+          "so somebody else's next update of that pack is taken, not ignored as stale")
+    x.do(f'ns.Pack:Select("{uid}"); addMarker(1, 0.7, 0.7); ns.Comm:PublishPack()')
+    w.run()
+    check(same(uid, x, y) and x.get("#ns:CurrentPack().history") == 2, "and the next publish goes out, with one snapshot for each that did")
+
+
+def test_focus():
+    print("\nSlide focus")
+    w = World()
+    a = w.join("Aly", raid=True, leader=True)
+    b = w.join("Bek", raid=True)
+    a.do("ns.Pack:AddBoard(ns:CurrentPack()); addMarker(2); addMarker(1); ns.Comm:PublishPack()")
+    w.run()
+    uid = a.get("ns:CurrentPack().uid")
+    second = a.get("ns:CurrentPack().boards[2].id")
+    b.do(f"""
+        ns.Pack:Select("{uid}")
+        addMarker(1, 0.2, 0.2)   -- something of their own to undo
+        ns.Events:On("REMOTE_FOCUS", function(from, index, board) heard = from .. " " .. index .. " " .. tostring(board) end)
+        function open()
+            return ns:CurrentPack().currentBoard .. "/" .. (ns:CurrentBoard().currentSlide or 1)
+                .. (ns.History:CanUndo() and " undo" or "")
+        end
+        before = open()
+    """)
+    a.do("ns.Comm:PublishFocus(1, ns:CurrentPack().boards[2])")
+    w.run(1)
+    check(b.get("heard") == f"Aly 1 {second}", f"a presenter's move is announced with its slide and board ({b.get('heard')})")
+    check(b.get("open()") == b.get("before") == "1/1 undo",
+          f"and moves nothing the pack is open on: not its board, its slide or the undo history ({b.get('open()')})")
+    mark = len(w.log)
+    b.do("ns.Comm:PublishFocus(1, ns:CurrentBoard())")
+    w.run(1)
+    check(not w.sent(mark, "F"), "a raider who is not an assistant presents to nobody")
+
+
 def test_strings_and_links(realm):
     print(f"\nExport, import and chat links on realm '{realm}'")
     w = World(realm)
@@ -584,6 +687,9 @@ if __name__ == "__main__":
     test_duplicate()
     test_slides()
     test_party()
+    test_other_addons()
+    test_failed_publish()
+    test_focus()
     test_strings_and_links("Dreamscythe")
     test_strings_and_links("Classic Beta PvP 2")
     test_surnames("-")

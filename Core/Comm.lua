@@ -135,15 +135,36 @@ function Comm:PublishPack()
 		return
 	end
 
-	pack.revision = (pack.revision or 1) + 1
+	-- A publish that fails has to leave the pack as it was. The revision most
+	-- of all: one that moved here and reached nobody puts this client ahead of
+	-- the group, where it ignores as stale whatever anyone else then publishes
+	-- of this pack, and says nothing about it.
+	local revision, publishedBy, publishedAt, modified =
+		pack.revision, pack.lastPublishedBy, pack.lastPublishedAt, pack.modified
+
+	pack.revision = (revision or 1) + 1
 	pack.lastPublishedBy = ns.Pack.AuthorName()
 	pack.lastPublishedAt = time()
 	pack.modified = nil
 
-	ns.Pack:PushHistory(pack)
+	local ok, err = pcall(function()
+		local snapshot = ns.Pack:Snapshot(pack)
+		self:AnnounceManifest(pack, channel)
+		-- Kept once the manifest is out: history is of what was published.
+		ns.Pack:PushHistory(pack, snapshot)
+	end)
+
+	if not ok then
+		pack.revision, pack.lastPublishedBy, pack.lastPublishedAt, pack.modified =
+			revision, publishedBy, publishedAt, modified
+
+		ns:Print("|cffff5555Could not publish \"%s\". Nothing was sent.|r", pack.title or "pack")
+		-- Still an error, to whatever the player has collecting them.
+		geterrorhandler()(err)
+		return
+	end
 
 	self.lastUpdate = { from = (UnitName("player")), time = time() }
-	self:AnnounceManifest(pack, channel)
 
 	ns:Print("Published \"%s\" rev %d. Sending only what each person is missing.",
 		pack.title or "pack", pack.revision)
@@ -152,10 +173,14 @@ function Comm:PublishPack()
 end
 
 --[[
-Focus carries the board as well as the slide. A bare index lands on whichever
-board the receiver happened to be looking at, which is wrong the moment the lead
-moves from one boss to the next -- and presentation mode makes that visible,
-because the raider is now actually watching.
+Focus is where a presenter is. The Present window sends it and the Present
+window shows it, and nothing else does either (UI/Presentation.lua): the editor
+changing slide is somebody reading or working on a pack, which is nobody
+else's business and must not move anyone.
+
+It carries the board as well as the slide. A bare index lands on whichever
+board the receiver happened to be on, which is wrong the moment the lead moves
+from one boss to the next.
 
 Older clients send a bare index; strsplit returns it unchanged, so they still
 read as "this slide, whatever board you are on".
@@ -164,7 +189,6 @@ function Comm:PublishFocus(index, board)
 	local channel = self:Channel()
 	if not channel or not self:CanPublish() then return end
 
-	board = board or ns:CurrentBoard()
 	local payload = tostring(index) .. FIELD .. (board and board.id or "")
 
 	-- Throttled against repeats of the same target only. A blanket 1/sec would
@@ -493,25 +517,10 @@ function Comm:ReceiveFocus(data, from)
 	local index = tonumber(indexText)
 	if not index then return end
 
-	-- Follow the board too, when we hold it. A boardID we do not recognise means
-	-- the sender is on a pack we do not have; moving the slide anyway is the
-	-- closest useful thing we can do.
-	if boardID and boardID ~= "" then
-		local pack = ns:CurrentPack()
-		for i, board in ipairs(pack and pack.boards or {}) do
-			if board.id == boardID then
-				if pack.currentBoard ~= i then ns.Pack:SelectBoard(pack, i) end
-				break
-			end
-		end
-	end
-
-	if ns.SwitchSlide then ns.SwitchSlide(index, true) end
-
-	-- Announced rather than calling into the UI: somebody is actively driving,
-	-- and a player with nothing open is missing it entirely. Presentation mode
-	-- decides what, if anything, to say about that.
-	ns.Events:Fire("REMOTE_FOCUS", from)
+	-- Announced, and nothing more. Which board and slide the pack is open on
+	-- are the editor's, and a presenter does not get to move them; the Present
+	-- window keeps a place of its own and is what listens for this.
+	ns.Events:Fire("REMOTE_FOCUS", from, index, boardID ~= "" and boardID or nil)
 end
 
 function Comm:ReceiveSpec(data, from)

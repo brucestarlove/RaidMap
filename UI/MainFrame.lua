@@ -620,20 +620,19 @@ local function CreateWindow()
 		GameTooltip:AddLine("Open the read-only view")
 		GameTooltip:AddLine("Compact, cannot be edited by accident, and follows", 0.6, 0.6, 0.6)
 		GameTooltip:AddLine("whoever is presenting. What your raiders want open.", 0.6, 0.6, 0.6)
+		GameTooltip:AddLine("It is where you present from, too: changing slide", 0.6, 0.6, 0.6)
+		GameTooltip:AddLine("there moves everyone's. Changing it here moves nobody's.", 0.6, 0.6, 0.6)
 		GameTooltip:Show()
 	end)
 	present:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-	function ns.SwitchSlide(index, fromRemote)
+	-- The editor's slide, and nobody else's. Changing it tells no one, and no
+	-- one else changes it: presenting is the Present window's job, which keeps
+	-- a place of its own for that (UI/Presentation.lua).
+	function ns.SwitchSlide(index)
 		local board = ns:CurrentBoard()
 		index = math.max(1, math.min(index, #board.slides))
 		local slide = board.slides[index]
-
-		-- A lead changing slides pushes everyone else's view along with it.
-		-- Guarded on fromRemote so a received focus does not echo back out.
-		if not fromRemote and ns.Comm and ns.Comm:CanPublish() then
-			ns.Comm:PublishFocus(index)
-		end
 
 		SelectMap(slide.mapKey, true)
 		board.currentSlide = index
@@ -641,11 +640,6 @@ local function CreateWindow()
 		ns.TokenLayer:SetSlide(slide)
 		filmstrip:Refresh()
 		notes:Refresh()
-
-		-- Announced rather than pushed into each view, so a second view of the
-		-- same slide (presentation mode) tracks the filmstrip, the lead's focus
-		-- and its own buttons through one path.
-		ns.Events:Fire("SLIDE_SHOWN", index)
 	end
 
 	-- After an undo/redo the slide we were viewing may no longer exist, or may
@@ -663,7 +657,7 @@ local function CreateWindow()
 		local board = ns:CurrentBoard()
 		if not board then return end
 		RefreshTokenToggles()
-		ns.SwitchSlide(board.currentSlide or 1, true)
+		ns.SwitchSlide(board.currentSlide or 1)
 	end)
 
 	-- Persist the view so a slide reopens framed the way it was left. Only the
@@ -761,7 +755,7 @@ local function CreateWindow()
 	ns.Events:On("BOARD_REPLACED", function()
 		local board = ns:CurrentBoard()
 		RefreshTokenToggles()
-		ns.SwitchSlide(board.currentSlide or 1, true)
+		ns.SwitchSlide(board.currentSlide or 1)
 	end)
 
 	-- Resize grip
@@ -783,10 +777,6 @@ local function CreateWindow()
 	frame:SetScript("OnShow", function() ns.db.profile.window.shown = true end)
 	frame:SetScript("OnHide", function() ns.db.profile.window.shown = false end)
 
-	function ns.IsMainShown()
-		return frame and frame:IsShown()
-	end
-
 	tinsert(UISpecialFrames, "RaidMapFrame")
 
 	RestorePosition()
@@ -797,9 +787,7 @@ local function CreateWindow()
 	refreshLibrary()
 
 	UpdateLayout()
-	-- fromRemote, so logging in as a raid lead does not broadcast a focus at
-	-- everyone before you have touched anything.
-	ns.SwitchSlide(board.currentSlide or 1, true)
+	ns.SwitchSlide(board.currentSlide or 1)
 	ns.Roster:Build()
 end
 

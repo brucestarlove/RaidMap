@@ -251,7 +251,13 @@ The type byte uses the following formats to implement the above:
     * Followed by the type-dependent payload, including count(s) if needed
 --]]
 
-local MAJOR, MINOR = "LibSerialize", 1
+-- RaidMap: registered under a name of its own, not as "LibSerialize". LibStub
+-- hands everyone who asks for a name the newest copy any addon loaded, so under
+-- the shared name a pack is serialized by whatever else is installed. DBM's r6
+-- divides by the number it is writing to tell -0 from 0, which the game raises
+-- an error for, and with DBM enabled no pack holding a 0 could be published.
+-- MINOR stays 1: this release also writes it as the version byte of the format.
+local MAJOR, MINOR = "RaidMap-LibSerialize", 1
 local LibSerialize
 if LibStub then
     LibSerialize = LibStub:NewLibrary(MAJOR, MINOR)

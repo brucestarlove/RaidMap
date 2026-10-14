@@ -172,11 +172,16 @@ end })
 -- can be read back.
 function LibDD:UIDropDownMenu_SetText(dropdown, text) dropdown._text = text end
 function LibDD:UIDropDownMenu_Initialize(dropdown, build) dropdown.build = build end
-function LibDD:UIDropDownMenu_AddButton(info) menu[#menu + 1] = info.text end
+function LibDD:UIDropDownMenu_AddButton(info) menu[#menu + 1] = info.text picks[info.text] = info.func end
 function menuOf(dropdown)
-    menu = {}
+    menu, picks = {}, {}
     dropdown.build(dropdown, 1)
     return table.concat(menu, " / ")
+end
+-- Choosing an entry of a dropdown's menu, by what it says.
+function pick(dropdown, text)
+    menuOf(dropdown)
+    picks[text]()
 end
 -- A menu put up in one go is kept whole, with where and how it was put up.
 function LibDD:EasyMenu(list, frame, anchor, x, y, mode) easyMenu = { list = list, frame = frame, anchor = anchor, mode = mode } end
@@ -343,7 +348,7 @@ def test_client(label, flavor_setup, author):
         board.slides[1].mapKey = "blank"
         canvas._left, canvas._top = 200, 600
         canvas:SetSize(600, 400)
-        ns.SwitchSlide(1, true)
+        ns.SwitchSlide(1)
     """)
     check(ev("canvas.drawW") is not None, "canvas lays out the blank map")
     lua.execute("""
@@ -356,7 +361,7 @@ def test_client(label, flavor_setup, author):
     """)
     check((ev("shown(1)"), ev("shown(4)")) == ("100-512 300-512", "0-188 0-188"),
           f"a map that starts partway into its tiles shows only the part of each inside it ({ev('shown(1)')}, {ev('shown(4)')})")
-    lua.execute("ns.SwitchSlide(1, true)")
+    lua.execute("ns.SwitchSlide(1)")
     check(ev("#palette") == 11, f"toolbar has 8 marker and 3 role buttons that click and drag ({ev('#palette')})")
     captions = ev("""(function()
         local out = {}
@@ -521,11 +526,11 @@ def test_client(label, flavor_setup, author):
           "the left arrow pages back to the start, where it greys out")
     lua.execute("click(tabFor(2))")
     check((ev("tabsShown()")[0], ev(current)) == ("1 2 3 4 5 6", 2), "clicking a tab in the scrolled run switches to that slide")
-    lua.execute("click(strip.nextButton) ns.SwitchSlide(9, true)")
+    lua.execute("click(strip.nextButton) ns.SwitchSlide(9)")
     check(ev("tabsShown()")[0] == "7 8 9 10 11 12", "a slide change arriving for a tab already showing does not move the run")
-    lua.execute("ns.SwitchSlide(3, true)")
+    lua.execute("ns.SwitchSlide(3)")
     check(ev("tabsShown()")[0] == "3 4 5 6 7 8", "one for a tab out of sight scrolls just far enough to show it")
-    lua.execute("ns.SwitchSlide(12, true) strip:SetWidth(412)")
+    lua.execute("ns.SwitchSlide(12) strip:SetWidth(412)")
     shown, width = ev("tabsShown()")
     check(shown == "10 11 12" and ev("stripEnd()") <= 412,
           f"a narrower strip (notes opened) keeps the current slide in the shorter run ({shown})")
@@ -541,7 +546,7 @@ def test_client(label, flavor_setup, author):
         return table.concat(out, ", ")
     end)()"""
     first = ev("ns:CurrentBoard().slides[1].name")
-    lua.execute("ns.SwitchSlide(1, true) before = #elements()")
+    lua.execute("ns.SwitchSlide(1) before = #elements()")
     lua.execute("tabFor(3).scripts.OnClick(tabFor(3), 'RightButton')")
     check((ev("popup.which"), ev("popup.EditBox:GetText()"), ev(current)) == ("RAIDMAP_RENAME_SLIDE", "Slide 3", 1),
           "right-clicking another slide's tab offers that slide's name and leaves the board on slide 1")
@@ -666,7 +671,7 @@ def test_client(label, flavor_setup, author):
     lua.execute("before = #elements() click(strip.copyButton)")
     check(ev("#elements() == before and elements()[1].data.pts ~= arrow.data.pts and pts(elements()[1]) == pts(arrow)"),
           "a copied slide has the same paths, with points of its own")
-    lua.execute("click(strip.deleteButton) ns.SwitchSlide(1, true)")
+    lua.execute("click(strip.deleteButton) ns.SwitchSlide(1)")
 
     lua.execute("""
         ns.ShowPresentation()
@@ -742,11 +747,11 @@ def test_client(label, flavor_setup, author):
         other = pack.boards[second].slides[1]
         other.mapKey = "blank"
         other.view.cx, other.view.cy, other.view.zoom = 0.30, 0.60, 3
-        ns.SelectBoard(second)
+        ns.Pack:SelectBoard(pack, second)
     """)
     check((ev("framing(other)"), ev("showing()")) == ("0.30 0.60 x3.00", "0.30 0.60 x3.00"),
           f"a board opens framed the way it was saved, not the way the last one was left ({ev('framing(other)')})")
-    lua.execute("ns.SelectBoard(1)")
+    lua.execute("ns.Pack:SelectBoard(ns:CurrentPack(), 1)")
     check((ev("framing()"), ev("showing()")) == (saved, saved), "and going back finds the first board's framing where it was")
 
     lua.execute("""
@@ -761,6 +766,76 @@ def test_client(label, flavor_setup, author):
     check((ev("framing()"), ev("showing()")) == ("0.25 0.25 x4.00", "0.25 0.25 x4.00"),
           f"a received publish shows the framing its sender saved ({ev('framing()')})")
     check(ev(rev) == ev("sentRev") and not ev("mark()"), "and loading it is not an edit of the receiver's own")
+
+    print("  -- presenting")
+    lua.execute("""
+        present = RaidMapPresentFrame
+        pack = ns:CurrentPack()
+        first, other = pack.boards[1], pack.boards[2]
+        ns.Pack:SelectBoard(pack, 1)
+        slideCount(3)
+        ns.SwitchSlide(3)
+
+        function editing() return pack.currentBoard .. "/" .. ns:CurrentBoard().currentSlide end
+        function presenting() return present.boardButton:GetText() .. " " .. present.slideButton:GetText():match("^%d+/%d+") end
+        function hinted()
+            local n = 0
+            for _, line in ipairs(printed) do
+                if line:find("is presenting", 1, true) then n = n + 1 end
+            end
+            return n
+        end
+
+        -- Every focus that goes out, as "slide board".
+        focusSent = {}
+        function BUS(_, text)
+            local message = text:gsub("%x%x", function(b) return string.char(tonumber(b, 16)) end)
+            if message:sub(1, 1) == "F" then focusSent[#focusSent + 1] = (message:sub(3):gsub(string.char(2), " ")) end
+        end
+        -- And one coming in, from somebody else who is presenting.
+        function hear(index, board)
+            local message = "F" .. string.char(1) .. index .. string.char(2) .. board.id
+            deliver("RaidMap", (message:gsub(".", function(c) return ("%02x"):format(c:byte()) end)), "PARTY", "Gil-Marsh")
+        end
+
+        group.party = true
+        present:Show()
+        was = presenting()
+        click(tabFor(2))
+    """)
+    check((ev("editing()"), ev("#focusSent"), ev("presenting() == was")) == ("1/2", 0, True),
+          f"changing slide in the editor tells nobody, and leaves the present window where it was ({ev('was')})")
+    lua.execute("pick(RaidMapBoardDropDown, other.name)")
+    check((ev("editing()"), ev("#focusSent"), ev("presenting() == was")) == ("2/1", 0, True), "so does changing board there")
+    lua.execute("pick(RaidMapBoardDropDown, first.name) ns.SwitchSlide(2) advance(0.1) click(palette[1])")
+
+    lua.execute("pick(RaidMapPresentSlideMenu, '1. ' .. first.slides[1].name) click(present.next)")
+    check((ev("presenting()"), ev("editing()")) == ("New Board 2/3", "1/2")
+          and ev("#focusSent == 2 and focusSent[1] == '1 ' .. first.id and focusSent[2] == '2 ' .. first.id"),
+          f"the present window's slide menu and arrows move it, and tell the group where it went ({ev('focusSent[2]')})")
+    lua.execute("pick(RaidMapPresentBoardMenu, other.name)")
+    check((ev("presenting()"), ev("editing()"), ev("focusSent[3] == '1 ' .. other.id")) == ("Board 2 1/1", "1/2", True)
+          and ev("present.tokens.slide == other.slides[1] and present.tokens.board == other"),
+          "its board menu takes the group to another board's first slide, and the editor stays on its own")
+
+    lua.execute("hear(3, first)")
+    check((ev("presenting()"), ev("editing()"), ev("#focusSent"), ev("ns.History:CanUndo()")) == ("New Board 3/3", "1/2", 3, True),
+          "somebody else presenting moves the present window, and neither the editor nor its undo history")
+    lua.execute("hear(1, other)")
+    check((ev("presenting()"), ev("editing()"), ev("ns.History:CanUndo()"), ev("hinted()")) == ("Board 2 1/1", "1/2", True, 0),
+          "to another board as well, which the editor does not follow them to")
+
+    lua.execute("present:Hide() window:Show() hear(2, first)")
+    check(ev("hinted()") == 1, "with the present window shut they are told somebody is presenting, editor open or not")
+    lua.execute("hear(3, first)")
+    check(ev("hinted()") == 1, "once")
+    lua.execute("present:Show()")
+    check((ev("presenting()"), ev("editing()")) == ("New Board 3/3", "1/2"), "and opening it lands where the presenter is")
+
+    lua.execute("group.party, group.raid = false, true click(present.prev)")
+    check((ev("presenting()"), ev("#focusSent")) == ("New Board 2/3", 3),
+          "a raider who is not an assistant can page through it, and moves nobody else")
+    lua.execute("group.raid = false present:Hide() window:Hide() function BUS() end")
 
     print("  -- bug report")
     lua.execute("""

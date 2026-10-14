@@ -221,6 +221,13 @@ path*; "custom art" is a catalog entry, not a second renderer.
 AceAddon-3.0, AceDB-3.0, AceComm-3.0 (chunking + throttling free),
 LibSerialize, LibDeflate.
 
+LibSerialize is registered as `RaidMap-LibSerialize`, not under the shared
+name, and the one changed line at the top of the file has to survive any
+update of it. Under the shared name LibStub hands out the newest copy any
+addon loaded: DBM-Core 12.1 ships r6, which divides by the number it is
+writing, and the game raises `Division by zero` for that, so with DBM enabled
+no pack holding a 0 could be published or exported (found 2026-10-13).
+
 **Strict layering** — the top two must never call down into UI:
 
 ```
@@ -377,12 +384,18 @@ Remaining in Phase 1:
 - [x] Presentation mode: compact read-only overlay for raiders, next/prev
       (`UI/Presentation.lua`, `/rm present` or the Present Mode button)
 
-**Presentation mode is a second *view*, never a second copy of the state.** Its
-next/prev call the same `ns.SwitchSlide` the editor does, so one path serves
-both directions: a lead presenting from it drives the raid through the existing
-focus opcode, and a raider's window tracks the lead with no second mechanism to
-keep in step. `ns.SwitchSlide` now fires `SLIDE_SHOWN` so a view that is not the
-editor can hear about it.
+**Presentation mode has a place of its own, and is the only thing focus
+touches.** (Changed 2026-10-13. It used to share the editor's board and slide,
+and `ns.SwitchSlide` sent and applied focus for both windows.) The window keeps
+its own board and slide in the current pack. Its buttons and menus move it and,
+for anyone who may publish, send the move over the focus opcode; a focus that
+arrives moves it, and nothing else. The editor sends no focus and follows none.
+
+Sharing one position did not survive two people using it. In a party everyone
+may publish, so anyone paging through a pack in the editor dragged the others'
+editors along, and a presenter pulled an author off the slide they were working
+on, clearing their undo history whenever the board changed. What the window
+draws is still the pack's own tables, never a copy.
 
 Read-only is structural, not a matter of leaving the buttons out:
 

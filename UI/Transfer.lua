@@ -16,15 +16,6 @@ local LINK_PREFIX = "garrmission:raidmap"
 -- Marks a pasted string as RaidMap's, to people and to the sites that host them.
 local EXPORT_PREFIX = "!RM:1!"
 
-local function stripHistory(pack, fn)
-	-- Snapshots would multiply the string size for no benefit to the recipient.
-	local saved = pack.history
-	pack.history = nil
-	local result = fn()
-	pack.history = saved
-	return result
-end
-
 ------------------------------------------------------------------ text frame
 
 -- Named, because UISpecialFrames takes a global frame name: registering a name
@@ -107,9 +98,9 @@ function ns.ShowExport(pack)
 		exportFrame = CreateTextFrame("RaidMapExportFrame", "Export pack", false)
 	end
 
-	local text = EXPORT_PREFIX .. stripHistory(pack, function()
-		return ns.Serialize:PackForExport(pack, "pack")
-	end)
+	-- Without its history: the snapshots would multiply the string size for no
+	-- benefit to the recipient.
+	local text = EXPORT_PREFIX .. ns.Pack:Snapshot(pack)
 
 	exportFrame.protected = text
 	exportFrame.heading:SetText(("Export \"%s\""):format(pack.title or "pack"))
