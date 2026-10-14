@@ -143,12 +143,14 @@ function GetPhysicalScreenSize() return 2560, 1440 end
 function UnitLevel() return 70 end
 function GetRealZoneText() return "Black Temple" end
 function IsInInstance() return true, "raid" end
+function GetInstanceInfo() return "Black Temple", "raid", 4, "25 Player", 25, 0, false, 564 end
+function GetSubZoneText() return "" end
 function GetNumGroupMembers() return 25 end
 function GetTexCoordsForRole(role) return 0, 0.25, 0, 0.25 end
 RAID_TARGET_1, RAID_TARGET_8 = "Star", "Skull"
 CLASS_ICON_TCOORDS = { WARRIOR = { 0, 0.25, 0, 0.25 } }
 RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 } }
-C_Map = { GetMapInfo = noop, GetMapArtLayers = noop, GetMapArtLayerTextures = noop }
+C_Map = { GetMapInfo = noop, GetMapArtLayers = noop, GetMapArtLayerTextures = noop, GetBestMapForUnit = noop }
 function BUS() end
 -- The Settings window, as far as taking a page for its AddOns list.
 addonPages = {}

@@ -54,8 +54,10 @@ local HIDDEN = {
 
 Catalog.blank = BLANK
 
+-- The map a new board starts on: the instance the player is standing in, if
+-- this client has its map.
 function Catalog:DefaultKey()
-	return ns.FLAVOR == "tbc" and "blacktemple" or "blank"
+	return self:HereKey() or (ns.FLAVOR == "tbc" and "blacktemple" or "blank")
 end
 
 ---------------------------------------------------------------- instances
@@ -93,13 +95,13 @@ local function FloorLabel(inst, floor, count)
 	return "Floor " .. floor.n
 end
 
-local instances, floorsByKey
+local instances, floorsByKey, instancesByMap
 
 -- Every instance whose art exists in this client, whatever the flavor: a
 -- pack shared from the other client must still open. The menu filters.
 function Catalog:GetInstances()
 	if instances then return instances end
-	instances, floorsByKey = {}, {}
+	instances, floorsByKey, instancesByMap = {}, {}, {}
 
 	for _, inst in ipairs(ns.InstanceData or {}) do
 		-- First art set that actually ships here wins; later alts are
@@ -133,6 +135,9 @@ function Catalog:GetInstances()
 					floor.label = FloorLabel(inst, floor, #found)
 					floor.name = #found == 1 and inst.name or (inst.name .. ": " .. floor.label)
 					floorsByKey[floor.key] = floor
+				end
+				for _, mapID in ipairs(inst.maps or {}) do
+					instancesByMap[mapID] = entry
 				end
 				instances[#instances + 1] = entry
 				break
@@ -256,6 +261,39 @@ function Catalog:GetZoneGroups()
 		return a < b
 	end)
 	return order, groups
+end
+
+---------------------------------------------------------------- here
+
+--[[
+The map of the instance the player is standing in, or nil.
+
+Inside a dungeon the client tells an addon neither where the player is nor
+which uiMap they are on, only which instance it is. The floor is the one named
+like the subzone, else the first. Battlegrounds are on uiMaps of their own, so
+those come from the client. Outside instances there is no answer: a board
+drawn in town is for somewhere else.
+]]
+function Catalog:HereKey()
+	local inInstance = IsInInstance()
+	local instanceID = select(8, GetInstanceInfo())
+	local subzone = GetSubZoneText()
+	if ns.AnySecret(inInstance, instanceID, subzone) or not inInstance then return nil end
+
+	self:GetInstances()
+	local inst = instancesByMap[instanceID]
+	if inst then
+		for _, floor in ipairs(inst.floors) do
+			if floor.label == subzone then return floor.key end
+		end
+		return inst.floors[1].key
+	end
+
+	local uiMapID = C_Map.GetBestMapForUnit("player")
+	if uiMapID and not ns.AnySecret(uiMapID) and self:Find("uimap:" .. uiMapID) then
+		return "uimap:" .. uiMapID
+	end
+	return nil
 end
 
 ---------------------------------------------------------------- lookup

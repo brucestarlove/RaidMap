@@ -257,6 +257,19 @@ def resolve_curated(curated, art, retail, present, shipped_art, builds):
     return problems, notes
 
 
+def check_maps(curated, tables):
+    """Problems with the Map table IDs that tie each instance to the place it
+    is played. tables: {product: load_instances(build)}."""
+    problems = []
+    for inst in curated:
+        if not inst.get("maps"):
+            problems.append(f"`{inst['key']}`: no `maps`, so a board made inside it cannot start on its map")
+        for m in inst.get("maps", []):
+            if not any(str(m) in t for t in tables.values()):
+                problems.append(f"`{inst['key']}`: map {m} is not an instance in any checked build")
+    return problems
+
+
 # ------------------------------------------------------------------ Lua output
 
 def lua_str(s):
@@ -275,7 +288,7 @@ def write_lua(curated, sources):
         "-- files = { ... } is drawn from those instead, row by row: the file IDs of",
         "-- minimap tiles, or art the addon ships. Its dims can end with the x, y in",
         "-- that block where the map starts. An alt with no path has no drawn art,",
-        "-- only floors like these.",
+        "-- only floors like these. maps are the instance IDs it is played on.",
         "",
         "local ADDON, ns = ...",
         "",
@@ -291,6 +304,8 @@ def write_lua(curated, sources):
         lines.append(f"\t\tkey = {lua_str(inst['key'])}, name = {lua_str(inst['name'])}, "
                      f"kind = {lua_str(inst['kind'])}, era = {lua_str(inst['era'])},")
         lines.append(f"\t\tflavors = {{ {flavors} }},")
+        if inst.get("maps"):
+            lines.append(f"\t\tmaps = {{ {', '.join(str(m) for m in inst['maps'])} }},")
         if verified:
             lines.append(f"\t\tverified = {{ {verified} }},")
         lines.append("\t\talts = {")
@@ -409,6 +424,7 @@ def main():
     with open(CURATED) as f:
         curated = json.load(f)["instances"]
     problems, notes = resolve_curated(curated, art, retail, present, shipped_art, builds)
+    problems += check_maps(curated, {p: load_instances(b) for p, b in builds.items()})
 
     sources = {**builds, "names": f"wow {retail_build}"}
     write_lua(curated, sources)

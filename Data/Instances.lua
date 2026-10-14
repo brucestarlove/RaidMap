@@ -8,7 +8,7 @@
 -- files = { ... } is drawn from those instead, row by row: the file IDs of
 -- minimap tiles, or art the addon ships. Its dims can end with the x, y in
 -- that block where the map starts. An alt with no path has no drawn art,
--- only floors like these.
+-- only floors like these. maps are the instance IDs it is played on.
 
 local ADDON, ns = ...
 
@@ -16,6 +16,7 @@ ns.InstanceData = {
 	{
 		key = "moltencore", name = "Molten Core", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 409 },
 		alts = {
 			{ path = "Interface\\WorldMap\\moltencore\\moltencore", floors = {
 				{ 1, "" },
@@ -25,6 +26,7 @@ ns.InstanceData = {
 	{
 		key = "onyxiaslair", name = "Onyxia's Lair", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 249 },
 		alts = {
 			{ path = "Interface\\WorldMap\\onyxiaslair\\onyxiaslair", floors = {
 				{ 1, "" },
@@ -34,6 +36,7 @@ ns.InstanceData = {
 	{
 		key = "blackwinglair", name = "Blackwing Lair", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 469 },
 		alts = {
 			{ path = "Interface\\WorldMap\\blackwinglair\\blackwinglair", floors = {
 				{ 1, "Dragonmaw Garrison" },
@@ -46,6 +49,7 @@ ns.InstanceData = {
 	{
 		key = "zulgurub", name = "Zul'Gurub", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 309 },
 		alts = {
 			{ path = "Interface\\WorldMap\\zulgurub\\zulgurub", floors = {
 				{ 0, "" },
@@ -55,6 +59,7 @@ ns.InstanceData = {
 	{
 		key = "ruinsofahnqiraj", name = "Ruins of Ahn'Qiraj", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 509 },
 		alts = {
 			{ path = "Interface\\WorldMap\\ruinsofahnqiraj\\ruinsofahnqiraj", floors = {
 				{ 0, "" },
@@ -64,6 +69,7 @@ ns.InstanceData = {
 	{
 		key = "ahnqiraj", name = "Temple of Ahn'Qiraj", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 531 },
 		alts = {
 			{ path = "Interface\\WorldMap\\ahnqiraj\\ahnqiraj", floors = {
 				{ 1, "The Hive Undergrounds" },
@@ -75,6 +81,7 @@ ns.InstanceData = {
 	{
 		key = "naxxramas", name = "Naxxramas", kind = "raid", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 533 },
 		alts = {
 			{ path = "Interface\\WorldMap\\naxxramas\\naxxramas", floors = {
 				{ 1, "The Construct Quarter" },
@@ -89,6 +96,7 @@ ns.InstanceData = {
 	{
 		key = "ragefire", name = "Ragefire Chasm", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 389 },
 		alts = {
 			{ path = "Interface\\WorldMap\\ragefire\\ragefire", floors = {
 				{ 1, "" },
@@ -98,6 +106,7 @@ ns.InstanceData = {
 	{
 		key = "deadmines", name = "The Deadmines", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 36 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thedeadmines\\thedeadmines", floors = {
 				{ 1, "The Deadmines" },
@@ -108,6 +117,7 @@ ns.InstanceData = {
 	{
 		key = "wailingcaverns", name = "Wailing Caverns", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 43 },
 		alts = {
 			{ path = "Interface\\WorldMap\\wailingcaverns\\wailingcaverns", floors = {
 				{ 1, "" },
@@ -117,6 +127,7 @@ ns.InstanceData = {
 	{
 		key = "shadowfangkeep", name = "Shadowfang Keep", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 33 },
 		alts = {
 			{ path = "Interface\\WorldMap\\shadowfangkeep\\shadowfangkeep", floors = {
 				{ 1, "The Courtyard" },
@@ -132,6 +143,7 @@ ns.InstanceData = {
 	{
 		key = "blackfathomdeeps", name = "Blackfathom Deeps", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 48 },
 		alts = {
 			{ path = "Interface\\WorldMap\\blackfathomdeeps\\blackfathomdeeps", floors = {
 				{ 1, "The Pool of Ask'Ar" },
@@ -143,6 +155,7 @@ ns.InstanceData = {
 	{
 		key = "stockade", name = "The Stockade", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 34 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thestockade\\thestockade", floors = {
 				{ 1, "" },
@@ -152,6 +165,7 @@ ns.InstanceData = {
 	{
 		key = "gnomeregan", name = "Gnomeregan", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 90 },
 		alts = {
 			{ path = "Interface\\WorldMap\\gnomeregan\\gnomeregan", floors = {
 				{ 1, "The Hall of Gears" },
@@ -164,6 +178,7 @@ ns.InstanceData = {
 	{
 		key = "razorfenkraul", name = "Razorfen Kraul", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 47 },
 		alts = {
 			{ path = "Interface\\WorldMap\\razorfenkraul\\razorfenkraul", floors = {
 				{ 1, "" },
@@ -173,6 +188,7 @@ ns.InstanceData = {
 	{
 		key = "scarletmonastery", name = "Scarlet Monastery", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 189 },
 		alts = {
 			{ path = "Interface\\WorldMap\\scarletmonastery\\scarletmonastery", floors = {
 				{ 1, "Graveyard" },
@@ -185,6 +201,7 @@ ns.InstanceData = {
 	{
 		key = "razorfendowns", name = "Razorfen Downs", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 129 },
 		alts = {
 			{ path = "Interface\\WorldMap\\razorfendowns\\razorfendowns", floors = {
 				{ 1, "" },
@@ -194,6 +211,7 @@ ns.InstanceData = {
 	{
 		key = "uldaman", name = "Uldaman", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 70 },
 		alts = {
 			{ path = "Interface\\WorldMap\\uldaman\\uldaman", floors = {
 				{ 1, "Hall of the Keepers" },
@@ -204,6 +222,7 @@ ns.InstanceData = {
 	{
 		key = "zulfarrak", name = "Zul'Farrak", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 209 },
 		alts = {
 			{ path = "Interface\\WorldMap\\zulfarrak\\zulfarrak", floors = {
 				{ 0, "" },
@@ -213,6 +232,7 @@ ns.InstanceData = {
 	{
 		key = "maraudon", name = "Maraudon", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 349 },
 		alts = {
 			{ path = "Interface\\WorldMap\\maraudon\\maraudon", floors = {
 				{ 1, "Caverns of Maraudon" },
@@ -223,6 +243,7 @@ ns.InstanceData = {
 	{
 		key = "sunkentemple", name = "Sunken Temple", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 109 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thetempleofatalhakkar\\thetempleofatalhakkar", floors = {
 				{ 1, "The Temple of Atal'Hakkar" },
@@ -232,6 +253,7 @@ ns.InstanceData = {
 	{
 		key = "blackrockdepths", name = "Blackrock Depths", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 230 },
 		alts = {
 			{ path = "Interface\\WorldMap\\blackrockdepths\\blackrockdepths", floors = {
 				{ 1, "Detention Block" },
@@ -242,6 +264,7 @@ ns.InstanceData = {
 	{
 		key = "blackrockspire", name = "Blackrock Spire", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 229 },
 		alts = {
 			{ path = "Interface\\WorldMap\\blackrockspire\\blackrockspire", floors = {
 				{ 1, "Tazz'Alor" },
@@ -256,6 +279,7 @@ ns.InstanceData = {
 	{
 		key = "diremaul", name = "Dire Maul", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 429 },
 		alts = {
 			{ path = "Interface\\WorldMap\\diremaul\\diremaul", floors = {
 				{ 0, "Overview" },
@@ -271,6 +295,7 @@ ns.InstanceData = {
 	{
 		key = "scholomance", name = "Scholomance", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 289 },
 		alts = {
 			{ path = "Interface\\WorldMap\\scholomanceold\\scholomanceold", floors = {
 				{ 1, "The Reliquary" },
@@ -289,6 +314,7 @@ ns.InstanceData = {
 	{
 		key = "stratholme", name = "Stratholme", kind = "dungeon", era = "vanilla",
 		flavors = { vanilla = true, forever = true, tbc = true },
+		maps = { 329 },
 		alts = {
 			{ path = "Interface\\WorldMap\\stratholme\\stratholme", floors = {
 				{ 1, "Crusader's Square" },
@@ -299,6 +325,7 @@ ns.InstanceData = {
 	{
 		key = "karazhan", name = "Karazhan", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 532 },
 		alts = {
 			{ path = "Interface\\WorldMap\\karazhan\\karazhan", floors = {
 				{ 1, "Servant's Quarters" },
@@ -324,6 +351,7 @@ ns.InstanceData = {
 	{
 		key = "gruulslair", name = "Gruul's Lair", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 565 },
 		alts = {
 			{ path = "Interface\\WorldMap\\gruulslair\\gruulslair", floors = {
 				{ 1, "" },
@@ -333,6 +361,7 @@ ns.InstanceData = {
 	{
 		key = "magtheridonslair", name = "Magtheridon's Lair", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 544 },
 		alts = {
 			{ path = "Interface\\WorldMap\\magtheridonslair\\magtheridonslair", floors = {
 				{ 1, "" },
@@ -342,6 +371,7 @@ ns.InstanceData = {
 	{
 		key = "serpentshrine", name = "Serpentshrine Cavern", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 548 },
 		alts = {
 			{ path = "Interface\\WorldMap\\coilfangreservoir\\coilfangreservoir", floors = {
 				{ 1, "" },
@@ -351,6 +381,7 @@ ns.InstanceData = {
 	{
 		key = "tempestkeep", name = "Tempest Keep: The Eye", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 550 },
 		alts = {
 			{ path = "Interface\\WorldMap\\tempestkeep\\tempestkeep", floors = {
 				{ 1, "Tempest Keep" },
@@ -360,6 +391,7 @@ ns.InstanceData = {
 	{
 		key = "hyjalsummit", name = "Hyjal Summit", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 534 },
 		alts = {
 			{ path = "Interface\\WorldMap\\cotmounthyjal\\cotmounthyjal", floors = {
 				{ 0, "" },
@@ -369,6 +401,7 @@ ns.InstanceData = {
 	{
 		key = "blacktemple", name = "Black Temple", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 564 },
 		verified = { tbc = true },
 		alts = {
 			{ path = "Interface\\WorldMap\\blacktemple\\blacktemple", floors = {
@@ -386,6 +419,7 @@ ns.InstanceData = {
 	{
 		key = "zulaman", name = "Zul'Aman", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 568 },
 		alts = {
 			{ path = "Interface\\WorldMap\\zulaman\\zulaman", floors = {
 				{ 0, "" },
@@ -395,6 +429,7 @@ ns.InstanceData = {
 	{
 		key = "sunwellplateau", name = "Sunwell Plateau", kind = "raid", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 580 },
 		alts = {
 			{ path = "Interface\\WorldMap\\sunwellplateau\\sunwellplateau", floors = {
 				{ 0, "Sunwell Plateau" },
@@ -405,6 +440,7 @@ ns.InstanceData = {
 	{
 		key = "hellfireramparts", name = "Hellfire Ramparts", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 543 },
 		alts = {
 			{ path = "Interface\\WorldMap\\hellfireramparts\\hellfireramparts", floors = {
 				{ 1, "" },
@@ -414,6 +450,7 @@ ns.InstanceData = {
 	{
 		key = "bloodfurnace", name = "The Blood Furnace", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 542 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thebloodfurnace\\thebloodfurnace", floors = {
 				{ 1, "" },
@@ -423,6 +460,7 @@ ns.InstanceData = {
 	{
 		key = "shatteredhalls", name = "The Shattered Halls", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 540 },
 		alts = {
 			{ path = "Interface\\WorldMap\\theshatteredhalls\\theshatteredhalls", floors = {
 				{ 1, "" },
@@ -432,6 +470,7 @@ ns.InstanceData = {
 	{
 		key = "slavepens", name = "The Slave Pens", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 547 },
 		alts = {
 			{ path = "Interface\\WorldMap\\theslavepens\\theslavepens", floors = {
 				{ 1, "" },
@@ -441,6 +480,7 @@ ns.InstanceData = {
 	{
 		key = "underbog", name = "The Underbog", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 546 },
 		alts = {
 			{ path = "Interface\\WorldMap\\theunderbog\\theunderbog", floors = {
 				{ 1, "" },
@@ -450,6 +490,7 @@ ns.InstanceData = {
 	{
 		key = "steamvault", name = "The Steamvault", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 545 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thesteamvault\\thesteamvault", floors = {
 				{ 1, "The Steamvault" },
@@ -460,6 +501,7 @@ ns.InstanceData = {
 	{
 		key = "manatombs", name = "Mana-Tombs", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 557 },
 		alts = {
 			{ path = "Interface\\WorldMap\\manatombs\\manatombs", floors = {
 				{ 1, "" },
@@ -469,6 +511,7 @@ ns.InstanceData = {
 	{
 		key = "auchenaicrypts", name = "Auchenai Crypts", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 558 },
 		alts = {
 			{ path = "Interface\\WorldMap\\auchenaicrypts\\auchenaicrypts", floors = {
 				{ 1, "Halls of the Hereafter" },
@@ -479,6 +522,7 @@ ns.InstanceData = {
 	{
 		key = "sethekkhalls", name = "Sethekk Halls", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 556 },
 		alts = {
 			{ path = "Interface\\WorldMap\\sethekkhalls\\sethekkhalls", floors = {
 				{ 1, "Veil Sethekk" },
@@ -489,6 +533,7 @@ ns.InstanceData = {
 	{
 		key = "shadowlabyrinth", name = "Shadow Labyrinth", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 555 },
 		alts = {
 			{ path = "Interface\\WorldMap\\shadowlabyrinth\\shadowlabyrinth", floors = {
 				{ 1, "" },
@@ -498,6 +543,7 @@ ns.InstanceData = {
 	{
 		key = "oldhillsbrad", name = "Old Hillsbrad Foothills", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 560 },
 		alts = {
 			{ path = "Interface\\WorldMap\\cothillsbradfoothills\\cothillsbradfoothills", floors = {
 				{ 0, "" },
@@ -507,6 +553,7 @@ ns.InstanceData = {
 	{
 		key = "blackmorass", name = "The Black Morass", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 269 },
 		alts = {
 			{ path = "Interface\\WorldMap\\cottheblackmorass\\cottheblackmorass", floors = {
 				{ 0, "" },
@@ -516,6 +563,7 @@ ns.InstanceData = {
 	{
 		key = "mechanar", name = "The Mechanar", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 554 },
 		alts = {
 			{ path = "Interface\\WorldMap\\themechanar\\themechanar", floors = {
 				{ 1, "The Mechanar" },
@@ -526,6 +574,7 @@ ns.InstanceData = {
 	{
 		key = "botanica", name = "The Botanica", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 553 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thebotanica\\thebotanica", floors = {
 				{ 1, "" },
@@ -535,6 +584,7 @@ ns.InstanceData = {
 	{
 		key = "arcatraz", name = "The Arcatraz", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 552 },
 		alts = {
 			{ path = "Interface\\WorldMap\\thearcatraz\\thearcatraz", floors = {
 				{ 1, "Stasis Block: Trion" },
@@ -546,6 +596,7 @@ ns.InstanceData = {
 	{
 		key = "magistersterrace", name = "Magisters' Terrace", kind = "dungeon", era = "tbc",
 		flavors = { tbc = true },
+		maps = { 585 },
 		alts = {
 			{ path = "Interface\\WorldMap\\magistersterrace\\magistersterrace", floors = {
 				{ 1, "Grand Magister's Asylum" },
@@ -556,6 +607,7 @@ ns.InstanceData = {
 	{
 		key = "dalaran", name = "City of Dalaran", kind = "dungeon", era = "forever",
 		flavors = { forever = true },
+		maps = { 2959 },
 		alts = {
 			{ path = "Interface\\WorldMap\\dalarancity\\dalarancity", floors = {
 				{ 1, "Dalaran City", dims = { 3, 3, 512, 512, 1104, 690, 131, 473 }, files = { 6982326, 6982322, 6982391, 6982332, 6982328, 6982395, 6982439, 6982441, 6982489 } },
@@ -567,6 +619,7 @@ ns.InstanceData = {
 	{
 		key = "hallofthanes", name = "The Hall of Thanes", kind = "dungeon", era = "forever",
 		flavors = { forever = true },
+		maps = { 3065 },
 		alts = {
 			{ floors = {
 				{ 1, "The Hall of Thanes", dims = { 2, 3, 512, 512, 544, 748, 249, 408 }, files = { 7726086, 7726092, 7726140, 7726146, 7726194, 7726200 } },
@@ -576,6 +629,7 @@ ns.InstanceData = {
 	{
 		key = "ruinsoflordaeron", name = "Ruins of Lordaeron", kind = "dungeon", era = "forever",
 		flavors = { forever = true },
+		maps = { 2999 },
 		alts = {
 			{ path = "Interface\\WorldMap\\ruinsoflordaeronscenario\\ruinsoflordaeronscenario", floors = {
 				{ 0, "" },
@@ -585,6 +639,7 @@ ns.InstanceData = {
 	{
 		key = "battleforgilneas", name = "Battle for Gilneas", kind = "bg", era = "forever",
 		flavors = { forever = true },
+		maps = { 3005 },
 		alts = {
 			{ path = "Interface\\WorldMap\\gilneasbattleground2\\gilneasbattleground2", floors = {
 				{ 0, "The Battle for Gilneas" },

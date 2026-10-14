@@ -88,10 +88,17 @@ def runtime(build, flavor, version):
     lua.execute(f"""
         function GetBuildInfo() return "{major}", "{version.split('.')[-1]}", "", 0 end
         C_Timer = {{ After = function(_, fn) fn() end }}
+        -- Where the player stands, set by at().
+        here = {{ inside = false, id = 0, subzone = "" }}
+        function IsInInstance() return here.inside, here.inside and "party" or "none" end
+        function GetInstanceInfo() return "", "", 1, "", 5, 0, false, here.id end
+        function GetSubZoneText() return here.subzone end
+        C_Map.GetBestMapForUnit = function() return here.uimap end
         time = os.time
         printed = {{}}
         ns = {{ FLAVOR = "{flavor}", db = {{ global = {{}} }} }}
         function ns:Print(fmt, ...) printed[#printed + 1] = select("#", ...) > 0 and fmt:format(...) or fmt end
+        function ns.AnySecret() return false end
     """)
     loader = lua.eval("""function(path, src)
         local f = assert(loadstring(src, "@" .. path))
@@ -105,6 +112,16 @@ def runtime(build, flavor, version):
 
 def lua_list(t):
     return [t[i] for i in range(1, len(t) + 1)] if t else []
+
+
+def at(lua, inside, instance=0, subzone="", uimap=None):
+    """The map a new board starts on, standing there."""
+    here = lua.globals().here
+    here.inside, here.id, here.subzone, here.uimap = inside, instance, subzone, uimap
+    C = lua.globals().ns.Catalog
+    key = C.DefaultKey(C)
+    here.inside, here.id, here.subzone, here.uimap = False, 0, "", None
+    return key
 
 
 def test_forever():
@@ -169,6 +186,13 @@ def test_forever():
           "the Hall of Thanes, with no art folder, is a window onto a 2x3 block of its minimap tiles")
     check(C.Find(C, "blacktemple") is not None, "legacy key 'blacktemple' resolves")
     check(C.DefaultKey(C) == "blank", "new slides default to the blank canvas on Forever")
+    check(at(lua, True, 3065) == "inst:hallofthanes:1", "a new board made in the Hall of Thanes starts on its map")
+    check(at(lua, True, 2959, "The Underbelly") == "inst:dalaran:2", "in Dalaran's Underbelly, on that floor")
+    check(at(lua, True, 2959, "Krasus' Landing") == "inst:dalaran:1", "elsewhere in Dalaran, on its first floor")
+    check(at(lua, True, 409) == "inst:moltencore:1", "in Molten Core, on its map")
+    check(at(lua, True, 489, "", 1460) == "uimap:1460", "in Warsong Gulch, on the battleground's own map")
+    check(at(lua, True, 2921) == "blank", "in an instance with no map here, on the blank canvas")
+    check(at(lua, False, 0, "", 1455) == "blank", "in Ironforge, outside any instance, on the blank canvas")
 
     census = lua.globals().ns.Census
     census.Run(census)
@@ -216,6 +240,9 @@ def test_anniversary():
     old = C.Find(C, "hyjal")
     check(old is not None, "legacy key 'hyjal' (Cataclysm zone page) still resolves")
     check(C.DefaultKey(C) == "blacktemple", "new slides still default to Black Temple on Anniversary")
+    check(at(lua, True, 532, "The Banquet Hall") == "inst:karazhan:3", "a new board made in Karazhan's Banquet Hall starts there")
+    check(at(lua, True, 548) == "inst:serpentshrine:1", "in Serpentshrine Cavern, on its map")
+    check(at(lua, True, 3065) == "blacktemple", "the Hall of Thanes is not a place on this client")
     d = C.Resolve(C, C.Find(C, "blacktemple").art)
     check(lua_list(d.textures)[0].lower().endswith("blacktemple\\blacktemple1"), "Black Temple page tile path unchanged")
 
